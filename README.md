@@ -1,5 +1,10 @@
 # Free-D
 Free-D Mesh Injector
 
+CURRENTLY A WIP
 
-God damn am I bad at using github. Meh.
+TODO LIST:
+ADD MORE THEN A TEST COMMAND
+FINISH ANIMATION EDITOR
+MATERIAL SUPPORT
+RELEASE!
