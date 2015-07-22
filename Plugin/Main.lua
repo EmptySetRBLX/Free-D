@@ -1,7 +1,4 @@
 --Free-D mesh injection by OTRainbowDash5000/YAYZMAN23
---Parser from a triangle obj loader by magnalite
-
---Hastily cobbled together, wanted to push this out ASAP
 
 local toolbar = plugin:CreateToolbar("TESTA")
 
