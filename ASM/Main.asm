@@ -30,7 +30,7 @@ testcommand:
 		mov eax, 0
 		ret
 
-mainmem: //this is allocated memory, you have read,write,execute access
+mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMANDS FROM HERE
 	mov [stackdata], eax
 	mov [stackdata+4], ebx
 	mov [stackdata+8], ecx
