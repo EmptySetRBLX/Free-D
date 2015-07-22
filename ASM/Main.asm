@@ -40,13 +40,13 @@ mainmem: //this is allocated memory, you have read,write,execute access
 	mov [stackdata+18], ebp
 	
 	pop eax
-	mov [stackdata+1c], eax //RETRUN ADDRESS
+	mov [stackdata+1c], eax //LENGTH POINTER
 	pop eax
-	mov [stackdata+20], eax //DEST POINTER
+	mov [stackdata+20], eax
 	pop eax
-	mov [stackdata+24], eax //SOURCE POINTER
+	mov [stackdata+24], eax
 	pop eax
-	mov [stackdata+28], eax //LENGTH
+	mov [stackdata+28], eax
 	
 	mov eax, esi
 	
