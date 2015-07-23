@@ -1,9 +1,28 @@
 alloc(mainmem,2048)
 alloc(stackdata, 64)
 alloc(testcommand, 512)
+alloc(facecommand, 512)
+label(addfacefalse)
 label(testcommandfalse)
 label(returnhere)
 label(cleanup)
+
+facecommand:
+	cmp [eax], 45455246 //FREE
+	jne addfacefalse
+	cmp [eax+4], 4120442d //-D A
+	jne addfacefalse
+	cmp [eax+8], 46204444 //DD F
+	jne addfacefalse
+	cmp [eax+c], 20454341 //ACE 
+	jne addfacefalse
+
+	mov eax,1
+	ret
+
+	addfacefalse:
+		mov eax,0
+		ret
 
 testcommand:
 	cmp [eax], 45455246 //FREE
@@ -49,8 +68,10 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 	mov [stackdata+28], eax
 	
 	mov eax, esi
-	
 	call testcommand
+	
+	mov eax,esi
+	call facecommand
 
 	
 	jmp cleanup
@@ -74,12 +95,14 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 		mov eax, [stackdata]
 		
 		cmp eax,[esi]
-		jne RobloxStudioBeta.exe+A8B6
+		jne RobloxStudioBeta.exe+A756
 		add edx,04
 		jmp returnhere
 
-"RobloxStudioBeta.exe"+A8A2:
+"RobloxStudioBeta.exe"+A742:
 	jmp mainmem
 	nop
 	nop
 	returnhere:
+	
+8B 55 08 56 8B 75 0C 83 E9 04 72 17 8D 9B 00 00 00 00 8B 02
