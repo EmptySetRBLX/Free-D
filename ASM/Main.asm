@@ -2,10 +2,176 @@ alloc(mainmem,2048)
 alloc(stackdata, 64)
 alloc(testcommand, 512)
 alloc(facecommand, 512)
+alloc(convertascii, 512)
+alloc(convertasciistorage, 64)
+alloc(convertbyte, 512)
+label(convert0)
+label(convert1)
+label(convert2)
+label(convert3)
+label(convert4)
+label(convert5)
+label(convert6)
+label(convert7)
+label(convert8)
+label(convert9)
+label(converta)
+label(convertb)
+label(convertc)
+label(convertd)
+label(converte)
+label(convertf)
 label(addfacefalse)
 label(testcommandfalse)
 label(returnhere)
 label(cleanup)
+
+convertbyte: //Holy crap this function is awful. Dont blame me, was written at 3am.
+	cmp eax, 30
+	je convert0
+	cmp eax, 31
+	je convert1
+	cmp eax, 32
+	je convert2
+	cmp eax, 33
+	je convert3
+	cmp eax, 34
+	je convert4
+	cmp eax, 35
+	je convert5
+	cmp eax, 36
+	je convert6
+	cmp eax, 37
+	je convert7
+	cmp eax, 38
+	je convert8
+	cmp eax, 39
+	je convert9
+	cmp eax, 41
+	je converta
+	cmp eax, 42
+	je convertb
+	cmp eax, 43
+	je convertc
+	cmp eax, 44
+	je convertd
+	cmp eax, 45
+	je converte
+	cmp eax, 46
+	je convertf
+
+	convert0:
+		mov eax, 0
+		ret
+	convert1:
+		mov eax, 1
+		ret
+	convert2:
+		mov eax, 2
+		ret
+	convert3:
+		mov eax, 3
+		ret
+	convert4:
+		mov eax, 4
+		ret	
+	convert5:
+		mov eax, 5
+		ret		
+	convert6:
+		mov eax, 6
+		ret	
+	convert7:
+		mov eax, 7
+		ret
+	convert8:
+		mov eax, 8
+		ret
+	convert9:
+		mov eax, 9
+		ret
+	converta:
+		mov eax, a
+		ret
+	convertb:
+		mov eax, b
+		ret
+	convertc:
+		mov eax, c
+		ret
+	convertd:
+		mov eax, d
+		ret	
+	converte:
+		mov eax, e
+		ret	
+	convertf:
+		mov eax, f
+		ret	
+
+convertasciistorage:
+
+convertascii:
+	mov [convertasciistorage], eax
+	mov [convertasciistorage+4], ebx
+	mov [convertasciistorage+8], ecx
+	mov ecx, 00000000
+	mov ebx, eax
+	mov eax, [ebx-3]
+	shr eax, 18
+	call convertbyte
+	shl eax, 1c //TEST IF THIS IS RIGHT WHEN HOME
+	mov ecx, eax
+	
+	mov eax, [ebx-2]
+	shr eax, 18
+	call convertbyte
+	shl eax, 18
+	add ecx, eax
+	
+	mov eax, [ebx-1]
+	shr eax, 18
+	call convertbyte
+	shl eax, 14
+	add ecx, eax
+	
+	mov eax, [ebx]
+	shr eax, 18
+	call convertbyte
+	shl eax, 10
+	add ecx, eax
+	
+	mov eax, [ebx+1]
+	shr eax, 18
+	call convertbyte
+	shl eax, c
+	add ecx, eax
+	
+	mov eax, [ebx+2]
+	shr eax, 18
+	call convertbyte
+	shl eax, 8
+	add ecx, eax
+	
+	mov eax, [ebx+3]
+	shr eax, 18
+	call convertbyte
+	shl eax, 4
+	add ecx, eax
+	
+	mov eax, [ebx+4]
+	shr eax, 18
+	call convertbyte
+	add ecx, eax
+	
+	mov eax, ecx
+	mov ebx, [convertasciistorage+4]
+	mov ecx, [convertasciistorage+8]
+	
+	
+	ret
+	
+
 
 facecommand:
 	cmp [eax], 45455246 //FREE
@@ -16,8 +182,13 @@ facecommand:
 	jne addfacefalse
 	cmp [eax+c], 20454341 //ACE 
 	jne addfacefalse
-
-	mov eax,1
+	
+	add eax, 10
+	
+	call convertascii
+	
+	mov eax, 11000000
+	shr eax, 18
 	ret
 
 	addfacefalse:
@@ -104,5 +275,5 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 	nop
 	nop
 	returnhere:
-	
+
 8B 55 08 56 8B 75 0C 83 E9 04 72 17 8D 9B 00 00 00 00 8B 02
