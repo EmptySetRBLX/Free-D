@@ -120,7 +120,7 @@ convertascii:
 	mov eax, [ebx-3]
 	shr eax, 18
 	call convertbyte
-	shl eax, 1c //TEST IF THIS IS RIGHT WHEN HOME
+	shl eax, 1c
 	mov ecx, eax
 	
 	mov eax, [ebx-2]
@@ -187,8 +187,7 @@ facecommand:
 	
 	call convertascii
 	
-	mov eax, 11000000
-	shr eax, 18
+	mov eax, 1
 	ret
 
 	addfacefalse:
