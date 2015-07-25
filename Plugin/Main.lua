@@ -41,13 +41,13 @@ end
 
 function splittobytes(floatstring)
 	local length = string.len(floatstring)
-		for i=length, 7 do
-			floatstring = "0" .. floatstring
-		end
-	return (string.sub(floatstring,7,8) .. string.sub(floatstring,5,6) .. string.sub(floatstring,3,4) .. string.sub(floatstring,1,2))
+	for i=length, 7 do
+		floatstring = "0" .. floatstring
+	end
+	return floatstring
 end
 
 button.Click:connect(function()
-	test.Value = "FREE-D" .. " ADD FACE " .. string.upper(splittobytes(("%x"):format(float2hex(2.23123123))))
+	test.Value = "FREE-D" .. " ADD FACE " .. string.upper(splittobytes(("%x"):format(float2hex(1)))) .. string.upper(splittobytes(("%x"):format(float2hex(0)))) .. string.upper(splittobytes(("%x"):format(float2hex(1))))
 	print(test.Value)
 end)

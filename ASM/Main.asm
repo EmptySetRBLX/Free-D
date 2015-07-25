@@ -2,9 +2,14 @@ alloc(mainmem,2048)
 alloc(stackdata, 64)
 alloc(testcommand, 512)
 alloc(facecommand, 512)
+alloc(facecommandstorage, 64)
 alloc(convertascii, 512)
 alloc(convertasciistorage, 64)
 alloc(convertbyte, 512)
+alloc(numberoffaces, 4)
+alloc(numberofvertexes, 4)
+alloc(facestorage, 102400)
+alloc(vertexstorage, 102400)
 label(convert0)
 label(convert1)
 label(convert2)
@@ -25,6 +30,18 @@ label(addfacefalse)
 label(testcommandfalse)
 label(returnhere)
 label(cleanup)
+
+numberoffaces:
+db 00 00 00 00
+
+numberofvertexes:
+db 00 00 00 00
+
+facestorage:
+db 00 00 00 00
+
+vertexstorage:
+db 00 00 00 00
 
 convertbyte: //Holy crap this function is awful. Dont blame me, was written at 3am.
 	cmp eax, 30
@@ -165,15 +182,16 @@ convertascii:
 	add ecx, eax
 	
 	mov eax, ecx
+	
 	mov ebx, [convertasciistorage+4]
 	mov ecx, [convertasciistorage+8]
-	
-	
 	ret
 	
-
+facecommandstorage:
 
 facecommand:
+	mov [facecommandstorage], ebx
+	mov [facecommandstorage+4], ecx
 	cmp [eax], 45455246 //FREE
 	jne addfacefalse
 	cmp [eax+4], 4120442d //-D A
@@ -185,7 +203,49 @@ facecommand:
 	
 	add eax, 10
 	
+	mov [facecommandstorage+8], eax
+	
 	call convertascii
+	
+	mov ebx, [facestorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [facestorage+ebx], eax
+	shr ebx, 2
+	mov [facestorage], ebx
+	
+	mov eax, [facecommandstorage+8]
+	add eax, 8
+	mov [facecommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [facestorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [facestorage+ebx], eax
+	shr ebx, 2
+	mov [facestorage], ebx
+	
+	mov eax, [facecommandstorage+8]
+	add eax, 8
+	mov [facecommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [facestorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [facestorage+ebx], eax
+	shr ebx, 2
+	mov [facestorage], ebx
+	
+	mov ebx, [convertasciistorage+4]
+	mov ecx, [convertasciistorage+8]
+	
+	mov eax, [numberoffaces]
+	add eax, 1
+	mov [numberoffaces], eax
 	
 	mov eax, 1
 	ret
