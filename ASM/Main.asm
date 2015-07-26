@@ -3,6 +3,8 @@ alloc(stackdata, 64)
 alloc(testcommand, 512)
 alloc(facecommand, 512)
 alloc(facecommandstorage, 64)
+alloc(vertexcommand, 512)
+alloc(vertexcommandstorage, 64)
 alloc(convertascii, 512)
 alloc(convertasciistorage, 64)
 alloc(convertbyte, 512)
@@ -10,6 +12,7 @@ alloc(numberoffaces, 4)
 alloc(numberofvertexes, 4)
 alloc(facestorage, 102400)
 alloc(vertexstorage, 102400)
+label(addvertexfalse)
 label(convert0)
 label(convert1)
 label(convert2)
@@ -187,6 +190,88 @@ convertascii:
 	mov ecx, [convertasciistorage+8]
 	ret
 	
+vertexcommandstorage:
+
+vertexcommand:
+	mov [vertexcommandstorage], ebx
+	mov [vertexcommandstorage+4], ecx
+	
+	cmp [eax], 45455246 //FREE
+	jne addvertexfalse
+	cmp [eax+4], 4120442d //-D A
+	jne addvertexfalse
+	cmp [eax+8], 56204444 //DD V
+	jne addvertexfalse
+	cmp [eax+c], 20545245 //ERT 
+	jne addvertexfalse
+	
+	add eax, 10
+	
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [numberofvertexes]
+	add eax, 1
+	mov [numberofvertexes], eax
+	
+	mov eax, 1
+	ret
+	
+	
+	mov eax, 1	
+	ret
+	
+	addvertexfalse:
+		mov eax,0
+		ret
+	
 facecommandstorage:
 
 facecommand:
@@ -299,9 +384,18 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 	
 	mov eax, esi
 	call testcommand
+	cmp eax, 1
+	je cleanup
 	
 	mov eax,esi
 	call facecommand
+	cmp eax, 1
+	je cleanup
+	
+	mov eax,esi
+	call vertexcommand
+	cmp eax,1
+	je cleanup
 
 	
 	jmp cleanup

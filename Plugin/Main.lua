@@ -48,6 +48,7 @@ function splittobytes(floatstring)
 end
 
 button.Click:connect(function()
-	test.Value = "FREE-D" .. " ADD FACE " .. string.upper(splittobytes(("%x"):format(float2hex(1)))) .. string.upper(splittobytes(("%x"):format(float2hex(0)))) .. string.upper(splittobytes(("%x"):format(float2hex(1))))
+	test.Value = "FREE-D" .. " ADD VERT " .. string.upper(splittobytes(("%x"):format(float2hex(1)))) .. string.upper(splittobytes(("%x"):format(float2hex(0)))) .. string.upper(splittobytes(("%x"):format(float2hex(1)))) .. "00000000"
 	print(test.Value)
+	test.Value = "FREE-D" .. " ADD FACE " .. "00000001" .. "00000001" .. "00000002"
 end)
