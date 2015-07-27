@@ -12,6 +12,8 @@ alloc(numberoffaces, 4)
 alloc(numberofvertexes, 4)
 alloc(facestorage, 102400)
 alloc(vertexstorage, 102400)
+alloc(dounion, 512)
+alloc(shouldinject, 4)
 label(addvertexfalse)
 label(convert0)
 label(convert1)
@@ -33,6 +35,11 @@ label(addfacefalse)
 label(testcommandfalse)
 label(returnhere)
 label(cleanup)
+label(returnunion)
+label(dounionop)
+
+shouldinject:
+db 00 00 00 00
 
 numberoffaces:
 db 00 00 00 00
@@ -257,6 +264,32 @@ vertexcommand:
 	shr ebx, 2
 	mov [vertexstorage], ebx
 	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
 	mov eax, [numberofvertexes]
 	add eax, 1
 	mov [numberofvertexes], eax
@@ -422,6 +455,28 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 		jne RobloxStudioBeta.exe+A756
 		add edx,04
 		jmp returnhere
+		
+dounion:
+	cmp [shouldinject], 00000000
+	je dounionop
+	mov [stackdata], eax
+	mov [esp], vertexstorage+4
+	mov eax, [numberofvertexes]
+	mov [esp+4], eax
+	mov [esp+8], facestorage+4
+	mov eax, [numberoffaces]
+	mov [esp+c], eax
+	mov eax, [stackdata]
+	jmp dounionop
+
+	dounionop:
+		call dword ptr [RobloxStudioBeta.exe+BE2C5C]
+		jmp returnunion
+
+"RobloxStudioBeta.exe"+1F5543:
+	jmp dounion
+	nop
+	returnunion:
 
 "RobloxStudioBeta.exe"+A742:
 	jmp mainmem
