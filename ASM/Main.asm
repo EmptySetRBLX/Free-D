@@ -4,6 +4,7 @@ alloc(testcommand, 512)
 alloc(facecommand, 512)
 alloc(facecommandstorage, 64)
 alloc(vertexcommand, 512)
+alloc(setready, 512)
 alloc(vertexcommandstorage, 64)
 alloc(convertascii, 512)
 alloc(convertasciistorage, 64)
@@ -33,6 +34,7 @@ label(converte)
 label(convertf)
 label(addfacefalse)
 label(testcommandfalse)
+label(setreadyfalse)
 label(returnhere)
 label(cleanup)
 label(returnunion)
@@ -390,30 +392,34 @@ testcommand:
 	mov [eax+10], 59414141 //AAAY
 	
 	mov eax,1
-	
 	ret
 	
 	testcommandfalse:
 		mov eax, 0
 		ret
+		
+setready:
+	cmp [eax], 45455246 //FREE
+	jne setreadyfalse
+	cmp [eax+4], 5320442D //-D S
+	jne setreadyfalse
+	cmp [eax+8], 53205445 //ET S
+	jne setreadyfalse
+	cmp [eax+C], 54524154 //TART
+	jne setreadyfalse
+	
+	mov [shouldinject], 1
+	mov eax, 1
+	ret
+	setreadyfalse:
+		mov eax, 0
+		ret
+	
 
 mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMANDS FROM HERE
-	mov [stackdata], eax
-	mov [stackdata+4], ebx
-	mov [stackdata+8], ecx
-	mov [stackdata+c], edx
-	mov [stackdata+10], esi
-	mov [stackdata+14], edi
-	mov [stackdata+18], ebp
+	pushfd
+	pushad
 	
-	pop eax
-	mov [stackdata+1c], eax //LENGTH POINTER
-	pop eax
-	mov [stackdata+20], eax
-	pop eax
-	mov [stackdata+24], eax
-	pop eax
-	mov [stackdata+28], eax
 	
 	mov eax, esi
 	call testcommand
@@ -429,30 +435,20 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 	call vertexcommand
 	cmp eax,1
 	je cleanup
+	
+	mov eax, esi
+	call setready
+	cmp eax,1
+	je cleanup
 
 	
 	jmp cleanup
 
 	cleanup:
-		mov eax, [stackdata+28]
-		push eax
-		mov eax, [stackdata+24]
-		push eax
-		mov eax, [stackdata+20]
-		push eax
-		mov eax, [stackdata+1c]
-		push eax
-		
-		mov ebp, [stackdata+18]
-		mov edi, [stackdata+14]
-		mov esi, [stackdata+10]
-		mov edx, [stackdata+c]
-		mov ecx, [stackdata+8]
-		mov ebx, [stackdata+4]
-		mov eax, [stackdata]
-		
+		popad
+		popfd
 		cmp eax,[esi]
-		jne RobloxStudioBeta.exe+A756
+		jne RobloxStudioBeta.exe+A8C6
 		add edx,04
 		jmp returnhere
 		
@@ -467,21 +463,29 @@ dounion:
 	mov eax, [numberoffaces]
 	mov [esp+c], eax
 	mov eax, [stackdata]
+	
+	mov [vertexstorage], 00000000
+	mov [facestorage], 00000000
+	mov [numberoffaces], 00000000
+	mov [numberofvertexes], 00000000
+	mov [shouldinject], 00000000
 	jmp dounionop
 
 	dounionop:
-		call dword ptr [RobloxStudioBeta.exe+BE2C5C]
+		call dword ptr [RobloxStudioBeta.exe+BEDD20]
 		jmp returnunion
 
-"RobloxStudioBeta.exe"+1F5543:
+"RobloxStudioBeta.exe"+1F8333:
 	jmp dounion
 	nop
 	returnunion:
 
-"RobloxStudioBeta.exe"+A742:
+"RobloxStudioBeta.exe"+A8B2:
 	jmp mainmem
 	nop
 	nop
 	returnhere:
 
-8B 55 08 56 8B 75 0C 83 E9 04 72 17 8D 9B 00 00 00 00 8B 02
+//injector 8B 55 08 56 8B 75 0C 83 E9 04 72 17 8D 9B 00 00 00 00 8B 02 
+
+//union 6A 00 51 D1 FA 8B CA C1  E9 1F 03 CA C7 04 24 DB 

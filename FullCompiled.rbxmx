@@ -1,0 +1,3894 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Folder" referent="RBX936E886486A04A3E8DB03CA5F3DBDE1A">
+		<Properties>
+			<string name="Name">Free-D</string>
+		</Properties>
+		<Item class="Script" referent="RBX13ABF07A37894412AF795AC0F9CDF0A2">
+			<Properties>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<string name="Name">Main</string>
+				<ProtectedString name="Source"><![CDATA[--Free-D mesh injection by OTRainbowDash5000/YAYZMAN23
+--Parser from a triangle obj loader by magnalite
+
+--Hastily cobbled together, wanted to push this out ASAP
+
+local toolbar = plugin:CreateToolbar("Free-D Mesh Injector")
+local classes = require(script:FindFirstChild("ClassGetter"))
+local state = "WaitForAssembly"
+local currentanimation = nil
+local currentmesh = nil
+local GUIs = script.Parent:FindFirstChild("GUIs")
+local main = GUIs.Main
+local ready = GUIs.ReadyToInject
+local waitingforinj = GUIs.WaitingForInjection
+local obj = Instance.new("Script")
+local mtl = Instance.new("Script")
+local asmrenderstep = false
+local active = false
+local numofframesgui = GUIs.NumberOfFrames
+local about = GUIs.About
+local animation = nil
+local animationframes = GUIs.AnimationFrames
+local animationframe = script.Parent.AnimationFrame
+obj.Parent = game.CoreGui
+obj.Name = ".OBJ"
+obj.Source = "#Paste the contents of your OBJ here"
+
+mtl.Parent = game.CoreGui
+mtl.Name = ".MTL"
+mtl.Source = ""
+
+function HideGUIs()
+	local children = GUIs:GetChildren()
+	for i=1, #children do
+		children[i].Visible = false
+	end
+end
+
+local button = toolbar:CreateButton(
+	"Free-D",
+	"Converts a .OBJ into an auto assembler script",
+	"http://www.roblox.com/asset/?id=270949662"
+)
+
+button.Click:connect(function()
+	active = true
+	GUIs.Parent = game.CoreGui
+	HideGUIs()
+	
+	if state == "WaitForAssembly" then
+		waitingforinj.Visible = true
+		plugin:OpenScript(script.Parent.AutoAssembler:Clone())
+		if asmrenderstep == false then
+			asmrenderstep = true
+			game["Run Service"]:BindToRenderStep("WaitingForInj", Enum.RenderPriority.Camera.Value, function()
+				local teststring = Instance.new("StringValue")
+				teststring.Value = "asdfgh"
+				teststring.Value = "FREE-D TEST COMMAND "
+				if teststring.Value ~= "FREE-D TEST COMMAND " then		
+					game["Run Service"]:UnbindFromRenderStep("WaitingForInj")
+					state = "Start"
+					waitingforinj.Visible = false
+					if active == true then
+						main.Visible = true
+					end
+				end
+			end)
+		end
+	else
+		state = "Start"
+		main.Visible = true
+	end
+	--[[local objfolder = game.Workspace:FindFirstChild("FreeD")
+	if objfolder then
+		if objfolder:FindFirstChild("OBJ") then
+			local frame1 = classes["Frame"].FromObj(classes, 50, objfolder:FindFirstChild("OBJ").Source) 
+			frame1:Render()
+		else
+			local obj = Instance.new("Script")
+			obj.Name = "OBJ"
+			obj.Parent = objfolder
+		end
+	else
+		objfolder = Instance.new("Folder")
+		objfolder.Name = "FreeD"
+		objfolder.Parent = game.Workspace
+		local obj = Instance.new("Script")
+		obj.Name = "OBJ"
+		obj.Parent = objfolder		
+	end--]]
+end)
+
+main.Animate.MouseButton1Click:connect(function()
+	state = "InjectAnimation"
+	HideGUIs()
+	ready.Visible = true
+	plugin:OpenScript(obj)
+	--plugin:OpenScript(mtl)
+end)
+
+main.About.MouseButton1Click:connect(function()
+	state = "About"
+	HideGUIs()
+	about.Visible = true
+end)
+
+about.Cancel.MouseButton1Click:connect(function()
+	state = "Start"
+	HideGUIs()
+	main.Visible = true
+end)
+
+main.Inject.MouseButton1Click:connect(function()
+	state = "InjectMesh"
+	HideGUIs()
+	ready.Visible = true
+	plugin:OpenScript(obj)
+	--plugin:OpenScript(mtl)
+end)
+
+ready.Cancel.MouseButton1Click:connect(function()
+	state = "Start"
+	HideGUIs()
+	main.Visible = true
+end)
+
+numofframesgui.Cancel.MouseButton1Click:connect(function()
+	state = "Start"
+	HideGUIs()
+	main.Visible = true
+end)
+
+numofframesgui.Confirm.MouseButton1Click:connect(function()
+	local number = tonumber(numofframesgui.FrameNumber.Text)
+	if number == nil then
+		numofframesgui.FrameNumber.Text = "30"
+	else
+		local frame1 = classes["Frame"].FromObj(classes, 50, obj.Source, mtl.Source)
+
+		animation = classes["Animation"](classes, number, frame1, animationframes, animationframe, plugin)
+		HideGUIs()
+	end
+end)
+
+ready.Confirm.MouseButton1Click:connect(function()
+	--state = "Start"
+	HideGUIs()
+	if state == "InjectMesh" then
+		main.Visible = true
+		local frame1 = classes["Frame"].FromObj(classes, 50, obj.Source, mtl.Source) 
+		local unionop = frame1:DoUnion(plugin)
+		unionop.Parent = game.Workspace
+		--[[local unionop = plugin:Union({Instance.new("Part")})
+		if unionop ~= nil then
+			unionop.Parent = game.Workspace
+		end--]]
+		state = "Start"
+	else
+		state = "GetFrames"
+		numofframesgui.FrameNumber.Text = "30"
+		numofframesgui.Visible = true
+	end
+end)
+
+plugin.Deactivation:connect(function()
+	active = false
+	HideGUIs()
+end)
+]]></ProtectedString>
+			</Properties>
+			<Item class="ModuleScript" referent="RBXF96ABF099A6B45758B520BC51D3A9960">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<string name="Name">ClassGetter</string>
+					<ProtectedString name="Source"><![CDATA[local ClassGetter = {}
+
+function getclasses(ctable)
+	for i=1, #ctable do
+		if ctable[i]:IsA("ModuleScript") then
+			ClassGetter[ctable[i].Name] = require(ctable[i])
+		end
+		getclasses(ctable[i]:GetChildren())
+	end
+end
+
+children = script:GetChildren()
+getclasses(children)
+
+--for key,value in pairs(t) do print(key,value) end
+
+
+
+
+return ClassGetter
+]]></ProtectedString>
+				</Properties>
+				<Item class="ModuleScript" referent="RBX076ADE7CD8394760A49920AB859C53AB">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">Frame</string>
+						<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, scale, vertexlist, facelist)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Type = script.Name
+	self.Vertexes = vertexlist
+	self.Faces = facelist
+	self.Scale = scale
+	self.ShouldRender = false
+	self.Bones = {}
+	return self
+end
+
+Class.Lerp = function(self, goal, fraction)
+	local returnvertexes = {}
+	local returnfaces = {}
+	for i=1, #self.Vertexes do
+		local selfcframe = CFrame.new(self.Vertexes[i].X, self.Vertexes[i].Y, self.Vertexes[i].Z)
+		local goalcframe = CFrame.new(goal.Vertexes[i].X, goal.Vertexes[i].Y, goal.Vertexes[i].Z)
+		local result = selfcframe:lerp(goalcframe, fraction)
+		returnvertexes[i] = self.classes["Vertex"](self.classes, result.x, result.y, result.z, i-1)
+	end
+	for i=1, #self.Faces do
+		local face = self.classes["Face"](self.classes, returnvertexes[self.Faces[i].V1.Index+1], returnvertexes[self.Faces[i].V2.Index+1], returnvertexes[self.Faces[i].V3.Index+1], self.Faces[i].Color)
+		returnfaces[i] = face
+	end
+	return self.classes["Frame"](self.classes, self.Scale, returnvertexes, returnfaces)
+end
+
+Class.FindVertexFromIndex = function(self, index)
+	for i=1, #self.Vertexes do
+		if self.Vertexes[i].Index == index then
+			return self.Vertexes[i]
+		end
+	end
+	return nil
+end
+
+Class.Clone = function(self)
+	local clonevertex = {}
+	local clonefacelist = {}
+	local bones = {}
+	for i=1, #self.Vertexes do
+		local currentvertex = self.Vertexes[i]
+		local newvertex = self.classes["Vertex"](self.classes, currentvertex.X, currentvertex.Y, currentvertex.Z, currentvertex.Index)
+		clonevertex[i] = newvertex
+	end
+	for i=1, #self.Faces do
+		local face = self.classes["Face"](self.classes, clonevertex[self.Faces[i].V1.Index+1], clonevertex[self.Faces[i].V2.Index+1], clonevertex[self.Faces[i].V3.Index+1], self.Faces[i].Color)
+		table.insert(clonefacelist, face)	
+	end
+	
+	local frame = self.classes["Frame"](self.classes, self.Scale, clonevertex, clonefacelist)
+	for i=1, #self.Bones do
+		
+		if self.Bones[i].Part then
+			bones[i] = self.classes["Bone"](self.classes, self.Bones[i].Part:Clone(), i)
+		else
+			bones[i] = self.classes["Bone"](self.classes, nil)
+		end
+		
+		for k=1, #self.Bones[i].LinkedTo do
+			table.insert(bones[i].LinkedTo, frame:FindVertexFromIndex(self.Bones[i].LinkedTo[k].Index))
+		end
+		for k=1, #self.Bones[i].C0s do
+			table.insert(bones[i].C0s, self.Bones[i].C0s[k])
+		end
+	end
+	for i=1, #bones do
+		local function getindexfrombone(bone)
+			for i=1, #self.Bones do
+				if self.Bones[i] == bone then
+					return i
+				end
+			end
+		end
+		if self.Bones[i].LinkedBoneParent then
+			bones[i].LinkedBoneParent = bones[getindexfrombone(self.Bones[i].LinkedBoneParent)]
+		end
+		for k=1, #self.Bones[i].LinkedBones do
+			--bones[i].LinkedBones[k] = bones[getindexfrombone(self.Bones[i].LinkedBones[k])]
+			local weee = bones[getindexfrombone(self.Bones[i].LinkedBones[k].Bone)]		
+			bones[i].LinkedBones[k] = self.classes["BoneConnection"](self.classes, weee, self.Bones[i].LinkedBones[k].C0)
+		end
+	end
+	if #bones > 0 then
+		frame.Bones = bones
+	end
+	return frame
+end
+
+Class.DoUnion = function(self, plugin)
+	for i=1, #self.Faces do
+		if self.Faces[i].Color then
+			if self.Faces[i].V1.Color == nil then
+				self.Faces[i].V1.Color = self.Faces[i].Color
+			end
+			if self.Faces[i].V2.Color == nil then
+				self.Faces[i].V2.Color = self.Faces[i].Color
+			end
+			if self.Faces[i].V3.Color == nil then
+				self.Faces[i].V3.Color = self.Faces[i].Color
+			end
+		end
+	end
+	for i=1, #self.Vertexes do
+		for k=1, #self.Vertexes do
+			if self.Vertexes[k].Index == i-1 then
+				self.classes["Libraries"].ExportVertex(self.Vertexes[k].X, self.Vertexes[k].Y, self.Vertexes[k].Z, self.Vertexes[k].Color)
+			end
+		end
+	end
+	for i=1, #self.Faces do
+		self.classes["Libraries"].ExportFace(self.Faces[i].V1.Index, self.Faces[i].V2.Index, self.Faces[i].V3.Index)
+	end
+	local stringv = Instance.new("StringValue")
+	stringv.Value = "Asdfgasa"
+	stringv.Value = "FREE-D" .. " SET START"
+	local part = Instance.new("Part")
+	part.BrickColor = BrickColor.new("Really red")
+	
+	local maxx = nil
+	local minx = nil
+	
+	local maxy = nil
+	local miny = nil
+	
+	local maxz = nil
+	local minz = nil
+	
+	for i=1, #self.Vertexes do
+		if maxx == nil then
+			maxx = self.Vertexes[i].X
+			minx = self.Vertexes[i].X
+			
+			maxy = self.Vertexes[i].Y
+			miny = self.Vertexes[i].Y
+			
+			maxz = self.Vertexes[i].Z
+			minz = self.Vertexes[i].Z
+		end
+		if maxx < self.Vertexes[i].X then
+			maxx = self.Vertexes[i].X
+		end
+		if minx > self.Vertexes[i].X then
+			minx = self.Vertexes[i].X
+		end
+		
+		if maxy < self.Vertexes[i].Y then
+			maxy = self.Vertexes[i].Y
+		end
+		if miny > self.Vertexes[i].Y then
+			miny = self.Vertexes[i].Y
+		end
+		
+		if maxz < self.Vertexes[i].Z then
+			maxz = self.Vertexes[i].Z
+		end
+		if minz > self.Vertexes[i].Z then
+			minz = self.Vertexes[i].Z
+		end
+		
+	end
+	local union = plugin:Union({part})
+	union.CFrame = CFrame.new(((maxx+minx)/2),((maxy+miny)/2),((maxz+minz)/2))
+	return union
+end
+
+Class.Render = function(self, parent, linemanager)
+	self.ShouldRender = true
+	for i=1, #self.Faces do
+		self.Faces[i]:Render(self.Scale, parent, linemanager)
+	end
+	for i=1, #self.Bones do
+		if self.Bones[i].Part then
+			self.Bones[i].Part.Parent = game.Workspace
+			self.Bones[i]:SetActive()
+		end
+	end
+	linemanager:Render()
+end
+
+Class.GetBone = function(self, part)
+	for i=1, #self.Bones do
+		if part == self.Bones[i].Part then
+			return self.Bones[i]
+		end
+	end
+	return nil
+end
+
+Class.GetVertice = function(self, part)
+	for i=1, #self.Vertexes do
+		if part == self.Vertexes[i].Part then
+			return self.Vertexes[i]
+		end
+	end
+	return nil
+end
+
+Class.IsPartOf = function(self, part)
+	for i=1, #self.Vertexes do
+		if part == self.Vertexes[i].Part then
+			return true
+		end
+	end
+	for i=1, #self.Bones do
+		if self.Bones[i].Part == part then
+			return true
+		end
+	end
+	return false
+end
+
+Class.DeRender = function(self)
+	self.ShouldRender = false
+	print("called")
+	for i=1, #self.Faces do
+		self.Faces[i]:DeRender()
+	end
+	for i=1, #self.Bones do
+		if self.Bones[i].Part then
+			pcall(function() self.Bones[i].Part.Parent = nil end)
+		end
+	end
+end
+
+Class.FromObj = function(classes, scale, objFile, mtlFile) 
+	--totally just copy/pasted most of this to save time
+	--credit to magnalite for the parser
+	
+	local function parseMaterials()
+		materials = {}
+		filePos = 0	
+		local endfile = false
+		while endfile == false do 
+			endFile     = true
+			materialPos = string.find(mtlFile, "newmtl" ,filePos)
+			
+			if materialPos then
+				materialNameStartPos = string.find(mtlFile, "%s", materialPos+1)
+				materialNameEndPos   = string.find(mtlFile, "%s", materialNameStartPos+1)
+				materialName         = string.sub(mtlFile,materialNameStartPos+1,materialNameEndPos-1)
+				
+				colorPos      = string.find(mtlFile,	"Kd", materialNameEndPos)
+				colorStartPos = string.find(mtlFile, "%s", colorPos)
+				colorEndPos   = string.find(mtlFile, "Ks", colorStartPos)
+				color         = string.sub(mtlFile, colorStartPos+1,colorEndPos-2)
+				
+				color1EndPos  = string.find(color, " ")
+				color1        = string.sub(color,0,color1EndPos-1)
+				
+				color2EndPos  = string.find(color, " ", color1EndPos+1)
+				color2        = string.sub(color,color1EndPos+1,color2EndPos-1)
+				
+				color3        = string.sub(color,color2EndPos+1)
+				
+				endColor      = Color3.new(tonumber(color1),tonumber(color2),tonumber(color3))
+				
+				materials[materialName] = endColor
+				
+				filePos = colorEndPos
+				
+			else
+				endFile = true
+				break 
+			end
+		
+		end
+	end
+	
+	local function parseVertexes()
+		vertexes = {}
+		filePos = 0	
+		local endfile = false
+		while not endfile do 
+			local vertexPos = string.find(objFile, "v ",filePos)
+			
+			if vertexPos then		
+				local startPos      = string.find(objFile, "%S", vertexPos+1)
+				local firstCordPos  = string.find(objFile, " ", startPos)
+				local firstCord     = string.sub(objFile,vertexPos+1,firstCordPos-1)
+				
+				local secondCordPos = string.find(objFile, " ", firstCordPos+1)
+				local secondCord    = string.sub(objFile,firstCordPos+1,secondCordPos-1)
+				
+				local thirdCordPos  = string.find(objFile, "%s", secondCordPos+1)
+				local thirdCord     = string.sub(objFile,secondCordPos+1,thirdCordPos-1)		
+				
+				filePos = thirdCordPos
+				
+	
+	
+				local vertex = Vector3.new(tonumber(firstCord),tonumber(secondCord),tonumber(thirdCord))
+				
+				
+				table.insert(vertexes,vertex)
+			
+			else
+				print("Number of vertices : " .. ("%x"):format(#vertexes))
+				endfile = true
+			end
+		end
+	end
+	
+	local function parseFaces()
+		faces = {}
+		filePos = 0	
+		local endfile = false
+		while not endfile do 
+			local faceStringPos = string.find(objFile, "f ",filePos)
+			
+			useMaterial = string.find(objFile, "usemtl",filePos)	
+			
+			if useMaterial and useMaterial < faceStringPos then
+				
+				materialNameStartPos = string.find(objFile, "%s", useMaterial)
+				materialNameEndPos   = string.find(objFile, "%s", materialNameStartPos+1)
+				materialName         = string.sub(objFile,materialNameStartPos+1,materialNameEndPos-1)
+				
+				useColor = materials[materialName]
+				
+			end
+			
+			if faceStringPos then
+				
+				local face2startPos  = string.find(objFile," ",faceStringPos+2)	
+				local face3startPos  = string.find(objFile," ",face2startPos+1)		
+				
+				local facePos1String = objFile:match("%d+",faceStringPos)
+				local facePos2String = objFile:match("%d+",face2startPos)
+				local facePos3String = objFile:match("%d+",face3startPos)		
+				
+				local face1Pos = vertexes[tonumber(facePos1String)]
+				local face2Pos = vertexes[tonumber(facePos2String)]
+				local face3Pos = vertexes[tonumber(facePos3String)]
+				
+				table.insert(faces,{face1Pos,face2Pos,face3Pos, useColor})
+							
+				filePos = face3startPos+1
+			else
+				print("Number of faces : " .. ("%x"):format(#faces))
+				endfile = true
+			end
+		end	
+	end
+	parseMaterials()
+	parseVertexes()
+	parseFaces()
+	
+	local finalfaces = {}
+	
+	for i=1, #faces do
+		finalfaces[i] = {}
+		for k=1, #vertexes do
+			if vertexes[k] == faces[i][1] then
+				finalfaces[i][1] = k
+			end
+			if vertexes[k] == faces[i][2] then
+				finalfaces[i][2] = k
+			end
+			if vertexes[k] == faces[i][3] then
+				finalfaces[i][3] = k
+			end
+		end
+		finalfaces[i][4] = faces[i][4]
+	end
+	
+	faces = finalfaces
+	
+	local returnvertexes = {}
+	local returnfaces = {}
+	for i=1, #vertexes do
+		local vert = classes["Vertex"](classes, vertexes[i].X, vertexes[i].Y, vertexes[i].Z, i-1)
+		table.insert(returnvertexes, vert)
+	end
+	
+	for i=1, #faces do
+		local v1 = returnvertexes[faces[i][1]]
+		local v2 = returnvertexes[faces[i][2]]
+		local v3 = returnvertexes[faces[i][3]]
+		local color = faces[i][4]
+		local face = classes["Face"](classes, v1, v2, v3, color)
+		table.insert(returnfaces, face)
+	end
+	
+	return classes["Frame"](classes, scale, returnvertexes, returnfaces)
+end
+
+
+return Class
+]]></ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX2924EDDD6BDF4CBB91949AC050EC3B9A">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">Animation</string>
+						<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, framenumber, initialframe, animationframes, frames, plugin)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Type = script.Name
+	self.Frames = {}
+	self.FrameNumber = framenumber
+	self.Frames[1] = initialframe
+	self.CurrentFrame = self.Frames[1]
+	self.Plugin = plugin
+	self.LineManager = classes["LineManager"](classes)
+	initialframe:Render(game.Workspace, self.LineManager)
+	self.GUI = animationframes:Clone()
+	self.GUI.Visible = true
+	self.GUIFrames = {}
+	self.CopyFrom = nil
+	self.SelectedBone = nil
+	local container = Instance.new("ScreenGui")
+	container.Parent = game.CoreGui
+	self.GUI.Parent = container
+	for i=1, framenumber do
+		local frame = frames:Clone()
+		local interval  = 1/framenumber
+		frame.Position = UDim2.new(interval*(i-1),0,0,0)
+		frame.Size = UDim2.new(interval,0,1,0)
+		self.GUIFrames[i] = classes["AnimationFrame"](classes, self, frame, i)--frame
+		self.GUIFrames[i].Frame.Parent = self.GUI
+	end
+	self.GUIFrames[1].Frame.BackgroundColor3 = Color3.new(1,1,1)
+	
+	local bonegui = script.BoneFunctions:Clone()
+	local bonescreen = Instance.new("ScreenGui")
+	bonescreen.Parent = game.CoreGui
+	bonegui.Parent = bonescreen
+	
+	bonegui.Export.MouseButton1Click:connect(function()
+		self.SelectorConnect:disconnect()
+		bonescreen:Destroy()
+		container:Destroy()
+		self.LineManager:DeRender()
+		self.CurrentFrame:DeRender()
+		if self.Frames[self.FrameNumber] == nil then
+			self.Frames[self.FrameNumber] = self.Frames[1]:Clone()
+		end
+		for i=1, self.FrameNumber do
+			if self.Frames[i] == nil then
+				local nextvalidframe = nil
+				local nextvalidindex = nil
+				
+				for k=i, self.FrameNumber do
+					if self.Frames[k] ~= nil then
+						if nextvalidframe == nil then
+							nextvalidframe = self.Frames[k]
+							nextvalidindex = k
+						end
+					end
+				end
+				
+				for k=i, nextvalidindex-1 do
+					self.Frames[k] = self.Frames[i-1]:Lerp(nextvalidframe, k/nextvalidindex)
+				end
+				--self.Frames[i] = self.Frames[i-1]:Lerp(nextvalidframe, ((i-1)/nextvalidindex))
+			end
+		end
+		
+		for i=1, self.FrameNumber do
+			local export = self.Frames[i]:DoUnion(self.Plugin)
+			export.Parent = game.Workspace
+			export.Name = i
+		end
+	end)
+	
+	bonegui.SelectBone.MouseButton1Click:connect(function()
+		local selection = game.Selection:Get()
+		if #selection == 1 then
+			local bone = self.CurrentFrame:GetBone(selection[1])
+			if bone then
+				self.SelectedBone = bone
+			end
+		end
+	end)
+	
+	bonegui.MakeBone.MouseButton1Click:connect(function()
+		local selection = game.Selection:Get()
+		if #selection == 1 then
+			if self.CurrentFrame:IsPartOf(selection[1]) == false then
+				table.insert(self.CurrentFrame.Bones, self.classes["Bone"](self.classes, selection[1]))
+				bonegui.MakeBone.TextColor3 = Color3.new(100/255,100/255,100/255)
+			end
+		end
+	end)
+	
+	bonegui.LinkBone.MouseButton1Click:connect(function()
+		local selection = game.Selection:Get()
+		if #selection == 1 then
+			local bone = self.CurrentFrame:GetBone(selection[1])
+			if bone then
+				if self.SelectedBone then
+					self.SelectedBone:AddVertex(bone)
+					self.SelectedBone:SetActive()
+				end
+			end
+		end
+	end)
+	
+	bonegui.LinkVertex.MouseButton1Click:connect(function()
+		local selection = game.Selection:Get()
+		local bone = self.SelectedBone
+		if bone == nil then
+			return
+		end
+		local selectedvertices = {}
+		for i=1, #selection do
+			if self.CurrentFrame:IsPartOf(selection[i]) == true then
+				local selectionbone = self.CurrentFrame:GetBone(selection[i])
+				if selectionbone ~= nil then
+					return
+				else
+					table.insert(selectedvertices, self.CurrentFrame:GetVertice(selection[i]))
+				end
+			else
+				return
+			end
+		end
+		if #selectedvertices == 0 then
+			return
+		end
+		for i=1, #selectedvertices do
+			for k=1, #self.CurrentFrame.Bones do
+				self.CurrentFrame.Bones[k]:RemoveVertex(selectedvertices[i])
+			end
+			bone:AddVertex(selectedvertices[i])
+		end
+		bone:SetActive()
+		
+		print("VALID LINK WITH")
+		print(#selectedvertices .. " Vertexes")
+	end)
+	
+	self.SelectorConnect = game.Selection.SelectionChanged:connect(function()
+		if bonegui then
+			bonegui.LinkBone.TextColor3 = Color3.new(100/255,100/255,100/255)
+			bonegui.LinkVertex.TextColor3 = Color3.new(100/255,100/255,100/255)
+			bonegui.MakeBone.TextColor3 = Color3.new(100/255,100/255,100/255)
+			bonegui.SelectBone.TextColor3 = Color3.new(100/255,100/255,100/255)
+			
+			local selection = game.Selection:Get()
+			if #selection == 1 then
+				local bone = self.CurrentFrame:GetBone(selection[1])
+				if bone then
+					bonegui.SelectBone.TextColor3 = Color3.new(1,1,1)
+					if self.SelectedBone and bone ~= self.SelectedBone then
+						bonegui.LinkBone.TextColor3 = Color3.new(1,1,1)
+					end
+				end
+			end
+			
+			if #selection == 1 then
+				if self.CurrentFrame:IsPartOf(selection[1]) == false then
+					bonegui.MakeBone.TextColor3 = Color3.new(1,1,1)
+				end
+			end
+			
+			local bone = self.SelectedBone
+			if bone == nil then
+				return
+			end
+			local selectedvertices = {}
+			for i=1, #selection do
+				if self.CurrentFrame:IsPartOf(selection[i]) == true then
+					local selectionbone = self.CurrentFrame:GetBone(selection[i])
+					if selectionbone ~= nil then
+						return
+					else
+						table.insert(selectedvertices, self.CurrentFrame:GetVertice(selection[i]))
+					end
+				else
+					return
+				end
+			end
+			if #selectedvertices == 0 then
+				return
+			end
+			bonegui.LinkVertex.TextColor3 = Color3.new(1,1,1)
+		end
+	end)
+	
+	return self
+end
+
+return Class
+]]></ProtectedString>
+					</Properties>
+					<Item class="Frame" referent="RBX95839CDC2AC546B2B1F719D82FFFB38F">
+						<Properties>
+							<bool name="Active">false</bool>
+							<Color3 name="BackgroundColor3">4294967295</Color3>
+							<float name="BackgroundTransparency">1</float>
+							<Color3 name="BorderColor3">4279970357</Color3>
+							<int name="BorderSizePixel">1</int>
+							<bool name="ClipsDescendants">false</bool>
+							<bool name="Draggable">false</bool>
+							<string name="Name">BoneFunctions</string>
+							<Ref name="NextSelectionDown">null</Ref>
+							<Ref name="NextSelectionLeft">null</Ref>
+							<Ref name="NextSelectionRight">null</Ref>
+							<Ref name="NextSelectionUp">null</Ref>
+							<UDim2 name="Position">
+								<XS>0</XS>
+								<XO>0</XO>
+								<YS>0.300000012</YS>
+								<YO>0</YO>
+							</UDim2>
+							<float name="Rotation">0</float>
+							<bool name="Selectable">false</bool>
+							<Ref name="SelectionImageObject">null</Ref>
+							<UDim2 name="Size">
+								<XS>0.200000003</XS>
+								<XO>0</XO>
+								<YS>0.400000006</YS>
+								<YO>0</YO>
+							</UDim2>
+							<token name="SizeConstraint">0</token>
+							<token name="Style">0</token>
+							<bool name="Visible">true</bool>
+							<int name="ZIndex">1</int>
+						</Properties>
+						<Item class="TextButton" referent="RBX9AB8A5E3DE884BECAABE24CA75BF6558">
+							<Properties>
+								<bool name="Active">true</bool>
+								<bool name="AutoButtonColor">true</bool>
+								<Color3 name="BackgroundColor3">4278190080</Color3>
+								<float name="BackgroundTransparency">0.5</float>
+								<Color3 name="BorderColor3">4294967295</Color3>
+								<int name="BorderSizePixel">1</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Draggable">false</bool>
+								<token name="Font">3</token>
+								<token name="FontSize">5</token>
+								<bool name="Modal">false</bool>
+								<string name="Name">SelectBone</string>
+								<Ref name="NextSelectionDown">null</Ref>
+								<Ref name="NextSelectionLeft">null</Ref>
+								<Ref name="NextSelectionRight">null</Ref>
+								<Ref name="NextSelectionUp">null</Ref>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0</YS>
+									<YO>0</YO>
+								</UDim2>
+								<float name="Rotation">0</float>
+								<bool name="Selectable">true</bool>
+								<bool name="Selected">false</bool>
+								<Ref name="SelectionImageObject">null</Ref>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>0</XO>
+									<YS>0.200000003</YS>
+									<YO>0</YO>
+								</UDim2>
+								<token name="SizeConstraint">0</token>
+								<token name="Style">0</token>
+								<string name="Text">Select Current Bone</string>
+								<Color3 name="TextColor3">4294967295</Color3>
+								<bool name="TextScaled">false</bool>
+								<Color3 name="TextStrokeColor3">4278190080</Color3>
+								<float name="TextStrokeTransparency">1</float>
+								<float name="TextTransparency">0</float>
+								<bool name="TextWrapped">false</bool>
+								<token name="TextXAlignment">2</token>
+								<token name="TextYAlignment">1</token>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">1</int>
+							</Properties>
+						</Item>
+						<Item class="TextButton" referent="RBXF027C06365AB413EA73511AD237C4E78">
+							<Properties>
+								<bool name="Active">true</bool>
+								<bool name="AutoButtonColor">true</bool>
+								<Color3 name="BackgroundColor3">4278190080</Color3>
+								<float name="BackgroundTransparency">0.5</float>
+								<Color3 name="BorderColor3">4294967295</Color3>
+								<int name="BorderSizePixel">1</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Draggable">false</bool>
+								<token name="Font">3</token>
+								<token name="FontSize">5</token>
+								<bool name="Modal">false</bool>
+								<string name="Name">MakeBone</string>
+								<Ref name="NextSelectionDown">null</Ref>
+								<Ref name="NextSelectionLeft">null</Ref>
+								<Ref name="NextSelectionRight">null</Ref>
+								<Ref name="NextSelectionUp">null</Ref>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0.200000003</YS>
+									<YO>0</YO>
+								</UDim2>
+								<float name="Rotation">0</float>
+								<bool name="Selectable">true</bool>
+								<bool name="Selected">false</bool>
+								<Ref name="SelectionImageObject">null</Ref>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>0</XO>
+									<YS>0.200000003</YS>
+									<YO>0</YO>
+								</UDim2>
+								<token name="SizeConstraint">0</token>
+								<token name="Style">0</token>
+								<string name="Text">Make Selected Part a Bone</string>
+								<Color3 name="TextColor3">4294967295</Color3>
+								<bool name="TextScaled">false</bool>
+								<Color3 name="TextStrokeColor3">4278190080</Color3>
+								<float name="TextStrokeTransparency">1</float>
+								<float name="TextTransparency">0</float>
+								<bool name="TextWrapped">false</bool>
+								<token name="TextXAlignment">2</token>
+								<token name="TextYAlignment">1</token>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">1</int>
+							</Properties>
+						</Item>
+						<Item class="TextButton" referent="RBX6C154EDFF5D64957BD46E958C1175D06">
+							<Properties>
+								<bool name="Active">true</bool>
+								<bool name="AutoButtonColor">true</bool>
+								<Color3 name="BackgroundColor3">4278190080</Color3>
+								<float name="BackgroundTransparency">0.5</float>
+								<Color3 name="BorderColor3">4294967295</Color3>
+								<int name="BorderSizePixel">1</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Draggable">false</bool>
+								<token name="Font">3</token>
+								<token name="FontSize">5</token>
+								<bool name="Modal">false</bool>
+								<string name="Name">LinkVertex</string>
+								<Ref name="NextSelectionDown">null</Ref>
+								<Ref name="NextSelectionLeft">null</Ref>
+								<Ref name="NextSelectionRight">null</Ref>
+								<Ref name="NextSelectionUp">null</Ref>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0.400000006</YS>
+									<YO>0</YO>
+								</UDim2>
+								<float name="Rotation">0</float>
+								<bool name="Selectable">true</bool>
+								<bool name="Selected">false</bool>
+								<Ref name="SelectionImageObject">null</Ref>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>0</XO>
+									<YS>0.200000003</YS>
+									<YO>0</YO>
+								</UDim2>
+								<token name="SizeConstraint">0</token>
+								<token name="Style">0</token>
+								<string name="Text">Link Vertex to Current Bone</string>
+								<Color3 name="TextColor3">4294967295</Color3>
+								<bool name="TextScaled">false</bool>
+								<Color3 name="TextStrokeColor3">4278190080</Color3>
+								<float name="TextStrokeTransparency">1</float>
+								<float name="TextTransparency">0</float>
+								<bool name="TextWrapped">false</bool>
+								<token name="TextXAlignment">2</token>
+								<token name="TextYAlignment">1</token>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">1</int>
+							</Properties>
+						</Item>
+						<Item class="TextButton" referent="RBX4C5DD7479C474123BC2A3F6B0D8E7C5B">
+							<Properties>
+								<bool name="Active">true</bool>
+								<bool name="AutoButtonColor">true</bool>
+								<Color3 name="BackgroundColor3">4278190080</Color3>
+								<float name="BackgroundTransparency">0.5</float>
+								<Color3 name="BorderColor3">4294967295</Color3>
+								<int name="BorderSizePixel">1</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Draggable">false</bool>
+								<token name="Font">3</token>
+								<token name="FontSize">5</token>
+								<bool name="Modal">false</bool>
+								<string name="Name">LinkBone</string>
+								<Ref name="NextSelectionDown">null</Ref>
+								<Ref name="NextSelectionLeft">null</Ref>
+								<Ref name="NextSelectionRight">null</Ref>
+								<Ref name="NextSelectionUp">null</Ref>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0.600000024</YS>
+									<YO>0</YO>
+								</UDim2>
+								<float name="Rotation">0</float>
+								<bool name="Selectable">true</bool>
+								<bool name="Selected">false</bool>
+								<Ref name="SelectionImageObject">null</Ref>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>0</XO>
+									<YS>0.200000003</YS>
+									<YO>0</YO>
+								</UDim2>
+								<token name="SizeConstraint">0</token>
+								<token name="Style">0</token>
+								<string name="Text">Link a Bone To a Bone</string>
+								<Color3 name="TextColor3">4294967295</Color3>
+								<bool name="TextScaled">false</bool>
+								<Color3 name="TextStrokeColor3">4278190080</Color3>
+								<float name="TextStrokeTransparency">1</float>
+								<float name="TextTransparency">0</float>
+								<bool name="TextWrapped">false</bool>
+								<token name="TextXAlignment">2</token>
+								<token name="TextYAlignment">1</token>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">1</int>
+							</Properties>
+						</Item>
+						<Item class="TextButton" referent="RBX422AEEDA2B5A44649E2DF36CB4BFBC76">
+							<Properties>
+								<bool name="Active">true</bool>
+								<bool name="AutoButtonColor">true</bool>
+								<Color3 name="BackgroundColor3">4278190080</Color3>
+								<float name="BackgroundTransparency">0.5</float>
+								<Color3 name="BorderColor3">4294967295</Color3>
+								<int name="BorderSizePixel">1</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Draggable">false</bool>
+								<token name="Font">3</token>
+								<token name="FontSize">5</token>
+								<bool name="Modal">false</bool>
+								<string name="Name">Export</string>
+								<Ref name="NextSelectionDown">null</Ref>
+								<Ref name="NextSelectionLeft">null</Ref>
+								<Ref name="NextSelectionRight">null</Ref>
+								<Ref name="NextSelectionUp">null</Ref>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0.800000012</YS>
+									<YO>0</YO>
+								</UDim2>
+								<float name="Rotation">0</float>
+								<bool name="Selectable">true</bool>
+								<bool name="Selected">true</bool>
+								<Ref name="SelectionImageObject">null</Ref>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>0</XO>
+									<YS>0.200000003</YS>
+									<YO>0</YO>
+								</UDim2>
+								<token name="SizeConstraint">0</token>
+								<token name="Style">0</token>
+								<string name="Text">Export Animation</string>
+								<Color3 name="TextColor3">4294967295</Color3>
+								<bool name="TextScaled">false</bool>
+								<Color3 name="TextStrokeColor3">4278190080</Color3>
+								<float name="TextStrokeTransparency">1</float>
+								<float name="TextTransparency">0</float>
+								<bool name="TextWrapped">false</bool>
+								<token name="TextXAlignment">2</token>
+								<token name="TextYAlignment">1</token>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">1</int>
+							</Properties>
+						</Item>
+					</Item>
+				</Item>
+				<Item class="ModuleScript" referent="RBX94B5E7CC289D4FF1B05E814C14698AD0">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">Face</string>
+						<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, V1, V2, V3, color)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Type = script.Name
+	if V1 == nil then
+		print("V1 nil")
+	end
+	if V2 == nil then
+		print("V2 nil")
+	end
+	if V3 == nil then
+		print("V3 nil")
+	end
+	self.V1 = V1
+	self.V2 = V2
+	self.V3 = V3
+	self.Lines = {}
+	self.ShouldRender = false
+	self.ConnectionHolder = {}
+	self.Color = color --place holder for later
+	return self
+end
+
+Class.SwitchVertex = function (self, vertex)
+	if self.V2 == vertex then
+		self.V2 = self.V1
+		self.V1 = vertex
+	elseif self.V3 == vertex then
+		self.V3 = self.V1
+		self.V1 = vertex
+	end
+end
+
+Class.Render = function(self, scale, parent, linemanager)
+	local v1 = self.V1:Render(scale, parent)
+	local v2 = self.V2:Render(scale, parent)
+	local v3 = self.V3:Render(scale, parent)
+	linemanager:NewLine(self.V1, self.V2)
+	linemanager:NewLine(self.V2, self.V3)
+	linemanager:NewLine(self.V3, self.V1)
+end
+
+Class.DeRender = function(self)
+	self.V1:DeRender()
+	self.V2:DeRender()
+	self.V3:DeRender()
+end
+
+--[[
+	self.ChangedConnnection = self.Part.Changed:connect(function(property)
+		if property == "Position" then
+			print("pos changed")
+			self.X = part.Position.X/scale
+			self.Y = part.Position.Y/scale
+			self.Z = part.Position.Z/scale
+		end
+	end)
+--]]
+
+
+return Class]]></ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX6565C349A98A4B7BA06AA4977E12BD0A">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">Vertex</string>
+						<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, X, Y, Z, IndexedNumber)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Type = script.Name
+	self.OriginalX = X
+	self.OriginalY = Y
+	self.OriginalZ = Z
+	self.X = X
+	self.Y = Y
+	self.Z = Z
+	self.Color = nil
+	self.Part = nil
+	self.BrickColor = nil
+	self.DeBounce = false
+	self.KillConnection = false
+	self.ChangedConnection = nil
+	self.ShouldRender = false
+	self.LinkedBone = nil
+	self.BeingChanged = false
+	self.Index = IndexedNumber
+	return self
+end
+
+Class.ConnectMe = function(self, property, scale, parent)
+	if self.ShouldRender == true then
+		if self.Part.Parent == nil then
+			self:BuildConnection(scale, parent)
+		else
+			self.X = self.Part.Position.X/scale
+			self.Y = self.Part.Position.Y/scale
+			self.Z = self.Part.Position.Z/scale
+			if self.BeingChanged == false then
+				if self.LinkedBone then
+					self.LinkedBone:AddVertex(self)
+				end
+			end
+		end
+	else
+		self.ChangedConnection:disconnect()
+	end
+end
+
+Class.BuildConnection = function(self, scale, parent)
+	if self.ChangedConnection then
+		self.ChangedConnection:disconnect()
+	end
+	pcall(function() self.Part:Destroy() end)
+	self.Part = nil	
+	if self.ShouldRender == true then
+		local part = script:FindFirstChild("Part"):Clone()
+		if self.BrickColor ~= nil then
+			part.BrickColor = self.BrickColor
+		end
+		part.CFrame = CFrame.new(self.X*scale, self.Y*scale, self.Z*scale)
+		self.Part = part
+		self.Part.Parent = parent
+		
+		self.ChangedConnection = self.Part.Changed:connect(function(property)
+			self:ConnectMe(property, scale, parent)
+		end)
+	else
+		self.ChangedConnection:disconnect()
+	end
+end
+
+Class.Render = function(self, scale, parent) --this needs a big change
+	--perhaps a new class for easc
+	self.ShouldRender = true
+	self:BuildConnection(scale, parent)
+	
+	--[[if self.Part == nil then
+		local part = script:FindFirstChild("Part"):Clone()
+		part.CFrame = CFrame.new(self.X*scale, self.Y*scale, self.Z*scale)
+		self.Part = part
+		self.Part.Parent = parent
+		self.ChangedConnnection = self.Part.Changed:connect(function(property)
+			self.DeBounce = true
+			if property == "Position" then
+				self.X = part.Position.X/scale
+				self.Y = part.Position.Y/scale
+				self.Z = part.Position.Z/scale
+			end
+			if property == "Parent" then
+				self:DeRender()
+				if self.Part ~= nil then
+					self.Part.Parent = nil
+					self.Part:Destroy()
+				end
+				self.Part = nil
+				if self.KillConnection == false then
+					self:Render(scale, parent)
+				end
+			end
+			self.DeBounce = false
+		end)
+	end--]]
+	return self.Part
+end
+
+Class.DeRender = function(self)
+	self.ShouldRender = false
+	self.ChangedConnection:disconnect()
+	pcall(function() self.Part:Destroy() end)
+end
+
+
+return Class
+]]></ProtectedString>
+					</Properties>
+					<Item class="Part" referent="RBXDC868C7D969A4B178E2C552A0E7A46D3">
+						<Properties>
+							<bool name="Anchored">false</bool>
+							<float name="BackParamA">-0.5</float>
+							<float name="BackParamB">0.5</float>
+							<token name="BackSurface">0</token>
+							<token name="BackSurfaceInput">0</token>
+							<float name="BottomParamA">-0.5</float>
+							<float name="BottomParamB">0.5</float>
+							<token name="BottomSurface">4</token>
+							<token name="BottomSurfaceInput">0</token>
+							<int name="BrickColor">194</int>
+							<CoordinateFrame name="CFrame">
+								<X>0</X>
+								<Y>17.3999939</Y>
+								<Z>22</Z>
+								<R00>1</R00>
+								<R01>0</R01>
+								<R02>0</R02>
+								<R10>0</R10>
+								<R11>1</R11>
+								<R12>0</R12>
+								<R20>0</R20>
+								<R21>0</R21>
+								<R22>1</R22>
+							</CoordinateFrame>
+							<bool name="CanCollide">true</bool>
+							<float name="Elasticity">0.5</float>
+							<float name="Friction">0.300000012</float>
+							<float name="FrontParamA">-0.5</float>
+							<float name="FrontParamB">0.5</float>
+							<token name="FrontSurface">0</token>
+							<token name="FrontSurfaceInput">0</token>
+							<float name="LeftParamA">-0.5</float>
+							<float name="LeftParamB">0.5</float>
+							<token name="LeftSurface">0</token>
+							<token name="LeftSurfaceInput">0</token>
+							<bool name="Locked">false</bool>
+							<token name="Material">256</token>
+							<string name="Name">Part</string>
+							<float name="Reflectance">0</float>
+							<float name="RightParamA">-0.5</float>
+							<float name="RightParamB">0.5</float>
+							<token name="RightSurface">0</token>
+							<token name="RightSurfaceInput">0</token>
+							<Vector3 name="RotVelocity">
+								<X>0</X>
+								<Y>0</Y>
+								<Z>0</Z>
+							</Vector3>
+							<float name="TopParamA">-0.5</float>
+							<float name="TopParamB">0.5</float>
+							<token name="TopSurface">3</token>
+							<token name="TopSurfaceInput">0</token>
+							<float name="Transparency">0</float>
+							<Vector3 name="Velocity">
+								<X>0</X>
+								<Y>0</Y>
+								<Z>0</Z>
+							</Vector3>
+							<token name="formFactorRaw">3</token>
+							<token name="shape">1</token>
+							<Vector3 name="size">
+								<X>1</X>
+								<Y>1</Y>
+								<Z>1</Z>
+							</Vector3>
+						</Properties>
+					</Item>
+				</Item>
+				<Item class="ModuleScript" referent="RBXC003C59237064213A1CDA5045D85EEC9">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">Libraries</string>
+						<ProtectedString name="Source"><![CDATA[local module = {}
+
+module.float2hex =  function(n)
+	    if n == 0.0 then return 0.0 end
+	
+	    local sign = 0
+	    if n < 0.0 then
+	        sign = 0x80
+	        n = -n
+	    end
+	
+	    local mant, expo = math.frexp(n)
+	    local hext = {}
+	
+	    if mant ~= mant then
+	        hext[#hext+1] = string.char(0xFF, 0x88, 0x00, 0x00)
+	
+	    elseif mant == math.huge or expo > 0x80 then
+	        if sign == 0 then
+	            hext[#hext+1] = string.char(0x7F, 0x80, 0x00, 0x00)
+	        else
+	            hext[#hext+1] = string.char(0xFF, 0x80, 0x00, 0x00)
+	        end
+	
+	    elseif (mant == 0.0 and expo == 0) or expo < -0x7E then
+	        hext[#hext+1] = string.char(sign, 0x00, 0x00, 0x00)
+	
+	    else
+	        expo = expo + 0x7E
+	        mant = (mant * 2.0 - 1.0) * math.ldexp(0.5, 24)
+	        hext[#hext+1] = string.char(sign + math.floor(expo / 0x2),
+	                                    (expo % 0x2) * 0x80 + math.floor(mant / 0x10000),
+	                                    math.floor(mant / 0x100) % 0x100,
+	                                    mant % 0x100)
+	    end
+	
+	    return tonumber(string.gsub(table.concat(hext),"(.)",
+	    function (c) return string.format("%02X%s",string.byte(c),"") end), 16)
+	end
+	
+module.splittobytes =  function(floatstring)
+		local length = string.len(floatstring)
+		for i=length, 7 do
+			floatstring = "0" .. floatstring
+		end
+		return string.upper(floatstring)
+end
+module.Num = 0
+module.ExportVertex = function(x,y,z, color3)
+	local stringv = Instance.new("StringValue")
+	stringv.Value = "asfasd"
+	--[[if color3 ~= nil then --couldnt get materials to work right sadly
+		local r = color3.r
+		local g = color3.g
+		local b = color3.b
+	
+		
+		local part = Instance.new("Part")
+		part.Parent = game.Workspace
+		part.CFrame = CFrame.new(0,module.Num*2,0)
+		part.BrickColor = BrickColor.new(color3)
+		
+		module.Num = module.Num +1
+		
+		print(r .. " " .. g .. " " .. b)
+		
+		r = string.upper(module.splittobytes(("%x"):format(module.float2hex(r))))
+		g = string.upper(module.splittobytes(("%x"):format(module.float2hex(g))))
+		b = string.upper(module.splittobytes(("%x"):format(module.float2hex(b))))
+		stringv.Value = "FREE-D" .. " ADD VERT " .. string.upper(module.splittobytes(("%x"):format(module.float2hex(x)))) .. string.upper(module.splittobytes(("%x"):format(module.float2hex(y)))) .. string.upper(module.splittobytes(("%x"):format(module.float2hex(z)))) .. r .. g .. b
+	else
+		stringv.Value = "FREE-D" .. " ADD VERT " .. string.upper(module.splittobytes(("%x"):format(module.float2hex(x)))) .. string.upper(module.splittobytes(("%x"):format(module.float2hex(y)))) .. string.upper(module.splittobytes(("%x"):format(module.float2hex(z)))) .. "3F800000" .. "3F800000" .. "3F800000"	
+	end--]]
+	stringv.Value = "FREE-D" .. " ADD VERT " .. string.upper(module.splittobytes(("%x"):format(module.float2hex(x)))) .. string.upper(module.splittobytes(("%x"):format(module.float2hex(y)))) .. string.upper(module.splittobytes(("%x"):format(module.float2hex(z)))) .. "3F800000" .. "3F800000" .. "3F800000" 
+end
+
+module.ExportFace = function(v1, v2, v3)
+	local stringv = Instance.new("StringValue")
+	stringv.Value = "asfasd"
+	stringv.Value = "FREE-D" .. " ADD FACE " .. module.splittobytes(("%x"):format(v1)) .. module.splittobytes(("%x"):format(v2)) .. module.splittobytes(("%x"):format(v3))
+end
+
+return module
+]]></ProtectedString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX289DB3C042EE4B91931173848C784C90">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">LineManager</string>
+						<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Lines = {}
+	return self
+end
+
+Class.NewLine = function(self, v1, v2)
+	self:AddLine(self.classes["Line"](self.classes, self, v1, v2))
+end
+
+Class.AddLine = function(self, line)
+	table.insert(self.Lines, line)
+end
+
+Class.Render = function(self)
+	for i=1, #self.Lines do
+		self.Lines[i]:RenderLoop()
+	end
+end
+
+Class.DeRender = function(self)
+	for i=1, #self.Lines do
+		self.Lines[i]:RemoveLine()
+	end
+	self.Lines = {}
+end
+
+
+return Class
+]]></ProtectedString>
+					</Properties>
+					<Item class="ModuleScript" referent="RBXEDC23775297B4BF1A7C5C732C2A2F4A0">
+						<Properties>
+							<Content name="LinkedSource"><null></null></Content>
+							<string name="Name">Line</string>
+							<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, linemanager, v1, v2)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.LineManager = linemanager
+	self.V1 = v1
+	self.V2 = v2
+	self.Line = nil
+	self.Connection1 = nil
+	self.Connection2 = nil
+	self.RenderSteppedConnection = nil
+	return self
+end
+
+Class.AddRenderSteppedConnection = function(self)
+	if self.RenderSteppedConnection then
+		self.RenderSteppedConnection:disconnect()
+	end
+	self.RenderSteppedConnection = nil
+	self.RenderSteppedConnection = game["Run Service"].RenderStepped:connect(function()
+		if self.V1.Part == nil then
+			return
+		end
+		if self.V1.Part.Parent == nil then
+			return
+		end
+		if self.V2.Part == nil then
+			return
+		end
+		if self.V2.Part.Parent == nil then
+			return
+		end
+		if self.RenderSteppedConnection then
+			self.RenderSteppedConnection:disconnect()
+		end
+		self.RenderSteppedConnection = nil
+		self:AddConnection()
+	end)
+end
+
+Class.RenderLine = function(self, p1, p2)
+	local line = Instance.new("LineHandleAdornment")
+	line.Length = (p1.CFrame.p-p2.CFrame.p).magnitude
+	line.CFrame = CFrame.new(Vector3.new(0,0,0), p2.CFrame.p-p1.CFrame.p)
+	line.Parent = game.CoreGui
+	line.Adornee = p1
+	return line
+end
+
+Class.RemoveLine = function(self)
+	if self.Connection1 ~= nil then
+		self.Connection1:disconnect()
+		self.Connection1 = nil
+	end
+	if self.Connection2 ~= nil then
+		self.Connection2:disconnect()
+		self.Connection2 = nil
+	end
+	self:DeRender()
+end
+
+Class.DeRender = function(self)
+	if self.Line ~= nil then
+		self.Line:Destroy()
+	end
+end
+
+Class.Render = function(self)
+	self:DeRender()
+	if self.V1 and self.V2 then
+		if self.V1.Part and self.V2.Part then
+			self.Line = self:RenderLine(self.V1.Part, self.V2.Part)
+		end
+	end
+end
+
+Class.AddConnection = function(self)
+	self:DeRender()
+	if self.Connection1 ~= nil then
+		self.Connection1:disconnect()
+		self.Connection1 = nil
+	end
+	if self.Connection2 ~= nil then
+		self.Connection2:disconnect()
+		self.Connection2 = nil
+	end
+	if self.V1.Part ~= nil and self.V2.Part ~= nil then
+		if self.V1.Part.Parent ~= nil and self.V2.Part.Parent ~= nil then
+			self.Connection1 = self.V1.Part.Changed:connect(function(property)
+				self:AddConnection()
+			end)
+			self.Connection2 = self.V2.Part.Changed:connect(function(property)
+				self:AddConnection()
+			end)
+			self:Render()
+			return
+		end
+	end
+	self:AddRenderSteppedConnection()
+end
+
+	
+
+Class.RenderLoop = function(self)
+	self:AddConnection()
+end
+
+
+return Class
+]]></ProtectedString>
+						</Properties>
+					</Item>
+				</Item>
+				<Item class="Folder" referent="RBXA5FE3FF849A345409E2B1D92898BE9A4">
+					<Properties>
+						<string name="Name">GUIs</string>
+					</Properties>
+					<Item class="ModuleScript" referent="RBX3E7F093F8F084E36B1CF3CF778B7CDBF">
+						<Properties>
+							<Content name="LinkedSource"><null></null></Content>
+							<string name="Name">AnimationFrame</string>
+							<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, animation, frame, index, plugin)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Frame = frame
+	self.Animation = animation
+	self.AnimationFrame = nil
+	self.Index = index
+	self.Plugin = plugin
+	if self.Animation.Frames[self.Index] then
+		self.AnimationFrame = self.Animation.Frames[self.Index]
+	end
+	if self.AnimationFrame then
+		self.Frame.BackgroundColor3 = Color3.new(0, 130/255, 30/255)
+	end
+	self.Frame.MouseButton1Click:connect(function() --lel, used a text button cause 2lazy4newinput
+		self:LMB()
+	end)
+	return self
+end
+
+Class.LMB = function(self)
+	self.AnimationFrame = self.Animation.Frames[self.Index]
+	--[[if self.AnimationFrame ~= nil then
+		self.Animation.LineManager:DeRender()
+		self.Animation.CurrentFrame:DeRender()
+		self.Animation.CurrentFrame = self.AnimationFrame
+		self.Animation.CurrentFrame:Render(game.Workspace, self.Animation.LineManager)
+	end--]]
+	local screengui = Instance.new("ScreenGui")
+	screengui.Parent = game.CoreGui
+	local maingui = script.FrameActions:Clone()
+	maingui.Parent = screengui
+	maingui = maingui:FindFirstChild("Frame")
+	if self.AnimationFrame ~= nil then
+		maingui.Select.TextColor3 = Color3.new(1,1,1)
+		maingui.Select.BorderColor3 = Color3.new(1,1,1)
+		maingui.Select.MouseButton1Click:connect(function()
+			for i=1, self.Animation.FrameNumber do
+				if self.Animation.Frames[i] == self.Animation.CurrentFrame then
+					self.Animation.GUIFrames[i].Frame.BackgroundColor3 = Color3.new(0, 130/255, 30/255)
+				end
+			end
+			self.Animation.LineManager:DeRender()
+			self.Animation.CurrentFrame:DeRender()
+			self.Animation.CurrentFrame = self.AnimationFrame
+			self.Animation.CurrentFrame:Render(game.Workspace, self.Animation.LineManager)
+			self.Frame.BackgroundColor3 = Color3.new(1,1,1)		
+			screengui:Destroy()
+		end)
+		maingui.Copy.TextColor3 = Color3.new(1,1,1)
+		maingui.Copy.BorderColor3 = Color3.new(1,1,1)
+		maingui.Copy.MouseButton1Click:connect(function()
+			self.Animation.CopyFrom = self.Animation.CurrentFrame
+			--self.Animation.CurrentFrame:DoUnion(self.Animation.Plugin).Parent = game.Workspace
+			screengui:Destroy()
+		end)
+	end
+	if self.Animation.CopyFrom ~= nil then
+		maingui.Paste.TextColor3 = Color3.new(1,1,1)
+		maingui.Paste.BorderColor3 = Color3.new(1,1,1)
+		maingui.Paste.MouseButton1Click:connect(function()
+			self.Animation.Frames[self.Index] = self.Animation.CopyFrom:Clone()
+			self.Frame.BackgroundColor3 = Color3.new(0, 130/255, 30/255)
+			screengui:Destroy()
+		end)
+	end
+	
+	maingui.Cancel.MouseButton1Click:connect(function()
+		screengui:Destroy()
+	end)
+end
+
+
+Class.Destroy = function(self)
+	
+end
+
+
+return Class
+]]></ProtectedString>
+						</Properties>
+						<Item class="Frame" referent="RBX5C5F4F87167044B8A7D44A4D6D2509B9">
+							<Properties>
+								<bool name="Active">false</bool>
+								<Color3 name="BackgroundColor3">4278190080</Color3>
+								<float name="BackgroundTransparency">0.300000012</float>
+								<Color3 name="BorderColor3">4279970357</Color3>
+								<int name="BorderSizePixel">1</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Draggable">false</bool>
+								<string name="Name">FrameActions</string>
+								<Ref name="NextSelectionDown">null</Ref>
+								<Ref name="NextSelectionLeft">null</Ref>
+								<Ref name="NextSelectionRight">null</Ref>
+								<Ref name="NextSelectionUp">null</Ref>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0</YS>
+									<YO>0</YO>
+								</UDim2>
+								<float name="Rotation">0</float>
+								<bool name="Selectable">false</bool>
+								<Ref name="SelectionImageObject">null</Ref>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>0</XO>
+									<YS>1</YS>
+									<YO>0</YO>
+								</UDim2>
+								<token name="SizeConstraint">0</token>
+								<token name="Style">0</token>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">2</int>
+							</Properties>
+							<Item class="Frame" referent="RBX1E9CF1DF323540C38E5949063441D313">
+								<Properties>
+									<bool name="Active">false</bool>
+									<Color3 name="BackgroundColor3">4278190080</Color3>
+									<float name="BackgroundTransparency">1</float>
+									<Color3 name="BorderColor3">4294967295</Color3>
+									<int name="BorderSizePixel">0</int>
+									<bool name="ClipsDescendants">false</bool>
+									<bool name="Draggable">false</bool>
+									<string name="Name">Frame</string>
+									<Ref name="NextSelectionDown">null</Ref>
+									<Ref name="NextSelectionLeft">null</Ref>
+									<Ref name="NextSelectionRight">null</Ref>
+									<Ref name="NextSelectionUp">null</Ref>
+									<UDim2 name="Position">
+										<XS>0.300000012</XS>
+										<XO>0</XO>
+										<YS>0.300000012</YS>
+										<YO>0</YO>
+									</UDim2>
+									<float name="Rotation">0</float>
+									<bool name="Selectable">false</bool>
+									<Ref name="SelectionImageObject">null</Ref>
+									<UDim2 name="Size">
+										<XS>0.400000006</XS>
+										<XO>0</XO>
+										<YS>0.400000006</YS>
+										<YO>0</YO>
+									</UDim2>
+									<token name="SizeConstraint">0</token>
+									<token name="Style">0</token>
+									<bool name="Visible">true</bool>
+									<int name="ZIndex">3</int>
+								</Properties>
+								<Item class="TextButton" referent="RBX063A5F3564814D1DB6907899B19784B4">
+									<Properties>
+										<bool name="Active">true</bool>
+										<bool name="AutoButtonColor">true</bool>
+										<Color3 name="BackgroundColor3">4278190080</Color3>
+										<float name="BackgroundTransparency">0.5</float>
+										<Color3 name="BorderColor3">4294967295</Color3>
+										<int name="BorderSizePixel">1</int>
+										<bool name="ClipsDescendants">false</bool>
+										<bool name="Draggable">false</bool>
+										<token name="Font">3</token>
+										<token name="FontSize">9</token>
+										<bool name="Modal">false</bool>
+										<string name="Name">Cancel</string>
+										<Ref name="NextSelectionDown">null</Ref>
+										<Ref name="NextSelectionLeft">null</Ref>
+										<Ref name="NextSelectionRight">null</Ref>
+										<Ref name="NextSelectionUp">null</Ref>
+										<UDim2 name="Position">
+											<XS>0</XS>
+											<XO>0</XO>
+											<YS>0.75</YS>
+											<YO>0</YO>
+										</UDim2>
+										<float name="Rotation">0</float>
+										<bool name="Selectable">true</bool>
+										<bool name="Selected">false</bool>
+										<Ref name="SelectionImageObject">null</Ref>
+										<UDim2 name="Size">
+											<XS>1</XS>
+											<XO>0</XO>
+											<YS>0.25</YS>
+											<YO>0</YO>
+										</UDim2>
+										<token name="SizeConstraint">0</token>
+										<token name="Style">0</token>
+										<string name="Text">Cancel</string>
+										<Color3 name="TextColor3">4294967295</Color3>
+										<bool name="TextScaled">false</bool>
+										<Color3 name="TextStrokeColor3">4278190080</Color3>
+										<float name="TextStrokeTransparency">1</float>
+										<float name="TextTransparency">0</float>
+										<bool name="TextWrapped">false</bool>
+										<token name="TextXAlignment">2</token>
+										<token name="TextYAlignment">1</token>
+										<bool name="Visible">true</bool>
+										<int name="ZIndex">4</int>
+									</Properties>
+								</Item>
+								<Item class="TextButton" referent="RBXBDAC56F6FC4F4EF7A1C33C853A8A0388">
+									<Properties>
+										<bool name="Active">true</bool>
+										<bool name="AutoButtonColor">true</bool>
+										<Color3 name="BackgroundColor3">4278190080</Color3>
+										<float name="BackgroundTransparency">0.5</float>
+										<Color3 name="BorderColor3">4284769380</Color3>
+										<int name="BorderSizePixel">1</int>
+										<bool name="ClipsDescendants">false</bool>
+										<bool name="Draggable">false</bool>
+										<token name="Font">3</token>
+										<token name="FontSize">9</token>
+										<bool name="Modal">false</bool>
+										<string name="Name">Paste</string>
+										<Ref name="NextSelectionDown">null</Ref>
+										<Ref name="NextSelectionLeft">null</Ref>
+										<Ref name="NextSelectionRight">null</Ref>
+										<Ref name="NextSelectionUp">null</Ref>
+										<UDim2 name="Position">
+											<XS>0</XS>
+											<XO>0</XO>
+											<YS>0.5</YS>
+											<YO>0</YO>
+										</UDim2>
+										<float name="Rotation">0</float>
+										<bool name="Selectable">true</bool>
+										<bool name="Selected">false</bool>
+										<Ref name="SelectionImageObject">null</Ref>
+										<UDim2 name="Size">
+											<XS>1</XS>
+											<XO>0</XO>
+											<YS>0.25</YS>
+											<YO>0</YO>
+										</UDim2>
+										<token name="SizeConstraint">0</token>
+										<token name="Style">0</token>
+										<string name="Text">Paste</string>
+										<Color3 name="TextColor3">4284769380</Color3>
+										<bool name="TextScaled">false</bool>
+										<Color3 name="TextStrokeColor3">4278190080</Color3>
+										<float name="TextStrokeTransparency">1</float>
+										<float name="TextTransparency">0</float>
+										<bool name="TextWrapped">false</bool>
+										<token name="TextXAlignment">2</token>
+										<token name="TextYAlignment">1</token>
+										<bool name="Visible">true</bool>
+										<int name="ZIndex">4</int>
+									</Properties>
+								</Item>
+								<Item class="TextButton" referent="RBX0950C15CD95B49C0A6CBE2B93E1A21DF">
+									<Properties>
+										<bool name="Active">true</bool>
+										<bool name="AutoButtonColor">true</bool>
+										<Color3 name="BackgroundColor3">4278190080</Color3>
+										<float name="BackgroundTransparency">0.5</float>
+										<Color3 name="BorderColor3">4284769380</Color3>
+										<int name="BorderSizePixel">1</int>
+										<bool name="ClipsDescendants">false</bool>
+										<bool name="Draggable">false</bool>
+										<token name="Font">3</token>
+										<token name="FontSize">9</token>
+										<bool name="Modal">false</bool>
+										<string name="Name">Copy</string>
+										<Ref name="NextSelectionDown">null</Ref>
+										<Ref name="NextSelectionLeft">null</Ref>
+										<Ref name="NextSelectionRight">null</Ref>
+										<Ref name="NextSelectionUp">null</Ref>
+										<UDim2 name="Position">
+											<XS>0</XS>
+											<XO>0</XO>
+											<YS>0.25</YS>
+											<YO>0</YO>
+										</UDim2>
+										<float name="Rotation">0</float>
+										<bool name="Selectable">true</bool>
+										<bool name="Selected">false</bool>
+										<Ref name="SelectionImageObject">null</Ref>
+										<UDim2 name="Size">
+											<XS>1</XS>
+											<XO>0</XO>
+											<YS>0.25</YS>
+											<YO>0</YO>
+										</UDim2>
+										<token name="SizeConstraint">0</token>
+										<token name="Style">0</token>
+										<string name="Text">Copy</string>
+										<Color3 name="TextColor3">4284769380</Color3>
+										<bool name="TextScaled">false</bool>
+										<Color3 name="TextStrokeColor3">4278190080</Color3>
+										<float name="TextStrokeTransparency">1</float>
+										<float name="TextTransparency">0</float>
+										<bool name="TextWrapped">false</bool>
+										<token name="TextXAlignment">2</token>
+										<token name="TextYAlignment">1</token>
+										<bool name="Visible">true</bool>
+										<int name="ZIndex">4</int>
+									</Properties>
+								</Item>
+								<Item class="TextButton" referent="RBXD98C2CD232E24C7288A52CAC25825441">
+									<Properties>
+										<bool name="Active">true</bool>
+										<bool name="AutoButtonColor">true</bool>
+										<Color3 name="BackgroundColor3">4278190080</Color3>
+										<float name="BackgroundTransparency">0.5</float>
+										<Color3 name="BorderColor3">4284769380</Color3>
+										<int name="BorderSizePixel">1</int>
+										<bool name="ClipsDescendants">false</bool>
+										<bool name="Draggable">false</bool>
+										<token name="Font">3</token>
+										<token name="FontSize">9</token>
+										<bool name="Modal">false</bool>
+										<string name="Name">Select</string>
+										<Ref name="NextSelectionDown">null</Ref>
+										<Ref name="NextSelectionLeft">null</Ref>
+										<Ref name="NextSelectionRight">null</Ref>
+										<Ref name="NextSelectionUp">null</Ref>
+										<UDim2 name="Position">
+											<XS>0</XS>
+											<XO>0</XO>
+											<YS>0</YS>
+											<YO>0</YO>
+										</UDim2>
+										<float name="Rotation">0</float>
+										<bool name="Selectable">true</bool>
+										<bool name="Selected">false</bool>
+										<Ref name="SelectionImageObject">null</Ref>
+										<UDim2 name="Size">
+											<XS>1</XS>
+											<XO>0</XO>
+											<YS>0.25</YS>
+											<YO>0</YO>
+										</UDim2>
+										<token name="SizeConstraint">0</token>
+										<token name="Style">0</token>
+										<string name="Text">Select</string>
+										<Color3 name="TextColor3">4284769380</Color3>
+										<bool name="TextScaled">false</bool>
+										<Color3 name="TextStrokeColor3">4278190080</Color3>
+										<float name="TextStrokeTransparency">1</float>
+										<float name="TextTransparency">0</float>
+										<bool name="TextWrapped">false</bool>
+										<token name="TextXAlignment">2</token>
+										<token name="TextYAlignment">1</token>
+										<bool name="Visible">true</bool>
+										<int name="ZIndex">4</int>
+									</Properties>
+								</Item>
+							</Item>
+						</Item>
+					</Item>
+				</Item>
+				<Item class="ModuleScript" referent="RBXE0B633B970A84846BD52C3C70F328974">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<string name="Name">Bone</string>
+						<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, part)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Part = part
+	if part then
+		self.LastPos = self.Part.CFrame
+	end
+	self.LinkedTo = {}
+	self.C0s = {}
+	self.Connection = nil
+	self.LinkedBoneParent = nil
+	self.LinkedBones = {}
+	
+	self.Type = script.Name
+	
+	return self
+end
+
+Class.SetActive = function(self)
+	if self.Connection then
+		self.Connection:disconnect()
+		self.Connection = nil
+	end
+	for i=1, #self.LinkedTo do
+		if self.LinkedTo[i].Part then
+			self.LinkedTo[i].BrickColor = self.Part.BrickColor
+			self.LinkedTo[i].Part.BrickColor = self.Part.BrickColor
+		end
+	end
+	self.Connection = self.Part.Changed:connect(function(property)
+		if self.Part then
+			for i=1, #self.LinkedTo do
+				if self.LinkedTo[i].Part then
+					self.LinkedTo[i].BeingChanged = true
+					self.LinkedTo[i].Part.CFrame = (self.Part.CFrame * self.C0s[i])
+					--self.LinkedTo[i].Part.CFrame =
+					self.LinkedTo[i].BrickColor = self.Part.BrickColor
+					self.LinkedTo[i].BeingChanged = false
+					self.LinkedTo[i].Part:Destroy()
+				end
+			end
+			for i=1, #self.LinkedBones do
+				self.LinkedBones[i].BeingChanged = true
+				self.LinkedBones[i].Bone.Part.CFrame = (self.Part.CFrame* self.LinkedBones[i].C0)
+				self.LinkedBones[i].BeingChanged = false
+			end
+			self.LastPos = self.Part.CFrame
+		else
+			if self.Connection then
+				self.Connection:disconnect()
+				self.Connection = nil
+			end
+		end
+	end)
+end
+
+Class.SetInactive = function(self)
+	if self.Connection then
+		self.Connection:disconnect()
+		self.Connection = nil
+	end
+end
+
+Class.RemoveVertex = function(self, vertex)
+	if vertex.Type == "Vertex" then
+		local oldvertex = nil
+		for i=1, #self.LinkedTo do
+			if self.LinkedTo[i] == vertex then
+				oldvertex = i
+			end
+		end
+		if oldvertex then
+			table.remove(self.LinkedTo, oldvertex)
+			table.remove(self.C0s, oldvertex)
+			self:RemoveVertex(vertex)
+		end
+	end
+end
+
+Class.AddVertex = function(self, vertex)
+	if vertex.Type == "Vertex" then
+		local oldvertex = nil
+		for i=1, #self.LinkedTo do
+			if self.LinkedTo[i] == vertex then
+				oldvertex = i
+			end
+		end
+		if oldvertex ~= nil then
+			table.remove(self.LinkedTo, oldvertex)
+			table.remove(self.C0s, oldvertex)
+		end
+		table.insert(self.LinkedTo, vertex)
+		table.insert(self.C0s, self.Part.CFrame:inverse() * vertex.Part.CFrame)
+	elseif vertex.Type == "Bone" then --Im lazy, k? Dun judge. K, judge. But pls only a little :'(.
+		if vertex ~= self and vertex ~= self.LinkedBoneParent then
+			local oldbone = nil
+			for i=1, #self.LinkedBones do
+				if self.LinkedBones[i].Bone == vertex then
+					oldbone = i
+				end
+			end
+			if oldbone then
+				table.remove(self.LinkedBones, oldbone)
+			end
+			vertex.LinkedBoneParent = self
+			table.insert(self.LinkedBones, self.classes["BoneConnection"](self.classes, vertex, self.Part.CFrame:inverse() * vertex.Part.CFrame))
+		end
+	end
+end
+
+
+return Class
+]]></ProtectedString>
+					</Properties>
+					<Item class="ModuleScript" referent="RBX92CB0C5CC1E840E2BB65692559267A0D">
+						<Properties>
+							<Content name="LinkedSource"><null></null></Content>
+							<string name="Name">BoneConnection</string>
+							<ProtectedString name="Source"><![CDATA[local Class = {}
+Class.__index = Class
+
+setmetatable(Class, {
+  __call = function (cls, ...)
+    return cls.new(...)
+  end,
+})
+
+Class.new = function(classes, bone, C0)
+	local self = setmetatable({}, Class)
+	self.classes = classes
+	self.Bone = bone
+	self.C0 = C0
+	self.Type = script.Name
+	self.BeingChanged = false
+	
+	self.Connection = self.Bone.Part.Changed:connect(function(property)
+		if self.BeingChanged == false then
+			if self.Bone.LinkedBoneParent then
+				self.Bone.LinkedBoneParent:AddVertex(self.Bone)
+				self.Connection:disconnect()
+			end
+		end
+	end)
+	return self
+end
+
+return Class
+]]></ProtectedString>
+						</Properties>
+					</Item>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="ScreenGui" referent="RBXCD2FE743C8774510BD03D5499BB32FC8">
+			<Properties>
+				<string name="Name">GUIs</string>
+			</Properties>
+			<Item class="Frame" referent="RBX0FA84943285547F3A05085467E4202DD">
+				<Properties>
+					<bool name="Active">false</bool>
+					<Color3 name="BackgroundColor3">4294967295</Color3>
+					<float name="BackgroundTransparency">1</float>
+					<Color3 name="BorderColor3">4279970357</Color3>
+					<int name="BorderSizePixel">1</int>
+					<bool name="ClipsDescendants">false</bool>
+					<bool name="Draggable">false</bool>
+					<string name="Name">ReadyToInject</string>
+					<Ref name="NextSelectionDown">null</Ref>
+					<Ref name="NextSelectionLeft">null</Ref>
+					<Ref name="NextSelectionRight">null</Ref>
+					<Ref name="NextSelectionUp">null</Ref>
+					<UDim2 name="Position">
+						<XS>0.100000001</XS>
+						<XO>0</XO>
+						<YS>0.400000006</YS>
+						<YO>0</YO>
+					</UDim2>
+					<float name="Rotation">0</float>
+					<bool name="Selectable">false</bool>
+					<Ref name="SelectionImageObject">null</Ref>
+					<UDim2 name="Size">
+						<XS>0.800000012</XS>
+						<XO>0</XO>
+						<YS>0.200000003</YS>
+						<YO>0</YO>
+					</UDim2>
+					<token name="SizeConstraint">0</token>
+					<token name="Style">0</token>
+					<bool name="Visible">false</bool>
+					<int name="ZIndex">1</int>
+				</Properties>
+				<Item class="TextLabel" referent="RBXACD35C98BFA04DBBBC5AAC1AB8E1E300">
+					<Properties>
+						<bool name="Active">false</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">9</token>
+						<string name="Name">TextLabel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0.200000003</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.600000024</XS>
+							<XO>0</XO>
+							<YS>1</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<string name="Text">Ready to inject?</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">false</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="ImageButton" referent="RBX63B4160B1F6E44EEBAF6A8DDF888926B">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<Content name="Image"><url>http://www.roblox.com/asset/?id=54952349</url></Content>
+						<Color3 name="ImageColor3">4294967295</Color3>
+						<Vector2 name="ImageRectOffset">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<Vector2 name="ImageRectSize">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<float name="ImageTransparency">0</float>
+						<bool name="Modal">false</bool>
+						<string name="Name">Confirm</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0.800000012</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<token name="ScaleType">0</token>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.200000003</XS>
+							<XO>0</XO>
+							<YS>1</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<Rect2D name="SliceCenter">
+							<min>
+								<X>0</X>
+								<Y>0</Y>
+							</min>
+							<max>
+								<X>0</X>
+								<Y>0</Y>
+							</max>
+						</Rect2D>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="ImageButton" referent="RBXB212564ACA204CCE8758E8D576C7CD6E">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<Content name="Image"><url>http://www.roblox.com/asset/?id=89114172</url></Content>
+						<Color3 name="ImageColor3">4294967295</Color3>
+						<Vector2 name="ImageRectOffset">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<Vector2 name="ImageRectSize">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<float name="ImageTransparency">0</float>
+						<bool name="Modal">false</bool>
+						<string name="Name">Cancel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<token name="ScaleType">0</token>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.200000003</XS>
+							<XO>0</XO>
+							<YS>1</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<Rect2D name="SliceCenter">
+							<min>
+								<X>0</X>
+								<Y>0</Y>
+							</min>
+							<max>
+								<X>0</X>
+								<Y>0</Y>
+							</max>
+						</Rect2D>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+			</Item>
+			<Item class="Frame" referent="RBX75A8AAE338584561A6C074D1B5618432">
+				<Properties>
+					<bool name="Active">false</bool>
+					<Color3 name="BackgroundColor3">4294967295</Color3>
+					<float name="BackgroundTransparency">1</float>
+					<Color3 name="BorderColor3">4279970357</Color3>
+					<int name="BorderSizePixel">1</int>
+					<bool name="ClipsDescendants">false</bool>
+					<bool name="Draggable">false</bool>
+					<string name="Name">WaitingForInjection</string>
+					<Ref name="NextSelectionDown">null</Ref>
+					<Ref name="NextSelectionLeft">null</Ref>
+					<Ref name="NextSelectionRight">null</Ref>
+					<Ref name="NextSelectionUp">null</Ref>
+					<UDim2 name="Position">
+						<XS>0.100000001</XS>
+						<XO>0</XO>
+						<YS>0.400000006</YS>
+						<YO>0</YO>
+					</UDim2>
+					<float name="Rotation">0</float>
+					<bool name="Selectable">false</bool>
+					<Ref name="SelectionImageObject">null</Ref>
+					<UDim2 name="Size">
+						<XS>0.800000012</XS>
+						<XO>0</XO>
+						<YS>0.200000003</YS>
+						<YO>0</YO>
+					</UDim2>
+					<token name="SizeConstraint">0</token>
+					<token name="Style">0</token>
+					<bool name="Visible">false</bool>
+					<int name="ZIndex">1</int>
+				</Properties>
+				<Item class="TextLabel" referent="RBXFC324CE2B7E647D880E80329394438DD">
+					<Properties>
+						<bool name="Active">false</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">7</token>
+						<string name="Name">TextLabel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>1</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<string name="Text">Waiting For You To Inject Free-Ds Assembly End Into Studio</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">false</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+			</Item>
+			<Item class="Frame" referent="RBXDC9EE64D82CF4829820A835642BC5066">
+				<Properties>
+					<bool name="Active">false</bool>
+					<Color3 name="BackgroundColor3">4278255360</Color3>
+					<float name="BackgroundTransparency">0</float>
+					<Color3 name="BorderColor3">4279970357</Color3>
+					<int name="BorderSizePixel">1</int>
+					<bool name="ClipsDescendants">false</bool>
+					<bool name="Draggable">false</bool>
+					<string name="Name">AnimationFrames</string>
+					<Ref name="NextSelectionDown">null</Ref>
+					<Ref name="NextSelectionLeft">null</Ref>
+					<Ref name="NextSelectionRight">null</Ref>
+					<Ref name="NextSelectionUp">null</Ref>
+					<UDim2 name="Position">
+						<XS>0</XS>
+						<XO>0</XO>
+						<YS>0</YS>
+						<YO>0</YO>
+					</UDim2>
+					<float name="Rotation">0</float>
+					<bool name="Selectable">false</bool>
+					<Ref name="SelectionImageObject">null</Ref>
+					<UDim2 name="Size">
+						<XS>1</XS>
+						<XO>0</XO>
+						<YS>0.100000001</YS>
+						<YO>0</YO>
+					</UDim2>
+					<token name="SizeConstraint">0</token>
+					<token name="Style">0</token>
+					<bool name="Visible">false</bool>
+					<int name="ZIndex">1</int>
+				</Properties>
+			</Item>
+			<Item class="Frame" referent="RBX6EE72C1ED31E4D85884ED88A0A5C31CC">
+				<Properties>
+					<bool name="Active">false</bool>
+					<Color3 name="BackgroundColor3">4294967295</Color3>
+					<float name="BackgroundTransparency">1</float>
+					<Color3 name="BorderColor3">4279970357</Color3>
+					<int name="BorderSizePixel">1</int>
+					<bool name="ClipsDescendants">false</bool>
+					<bool name="Draggable">false</bool>
+					<string name="Name">NumberOfFrames</string>
+					<Ref name="NextSelectionDown">null</Ref>
+					<Ref name="NextSelectionLeft">null</Ref>
+					<Ref name="NextSelectionRight">null</Ref>
+					<Ref name="NextSelectionUp">null</Ref>
+					<UDim2 name="Position">
+						<XS>0.400000006</XS>
+						<XO>0</XO>
+						<YS>0.400000006</YS>
+						<YO>0</YO>
+					</UDim2>
+					<float name="Rotation">0</float>
+					<bool name="Selectable">false</bool>
+					<Ref name="SelectionImageObject">null</Ref>
+					<UDim2 name="Size">
+						<XS>0.200000003</XS>
+						<XO>0</XO>
+						<YS>0.200000003</YS>
+						<YO>0</YO>
+					</UDim2>
+					<token name="SizeConstraint">0</token>
+					<token name="Style">0</token>
+					<bool name="Visible">true</bool>
+					<int name="ZIndex">1</int>
+				</Properties>
+				<Item class="TextBox" referent="RBX0DB25F720CBE4AA4B523BB31EA0430F0">
+					<Properties>
+						<bool name="Active">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClearTextOnFocus">true</bool>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">9</token>
+						<bool name="MultiLine">false</bool>
+						<string name="Name">FrameNumber</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0.300000012</XS>
+							<XO>0</XO>
+							<YS>0.200000003</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">true</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.400000006</XS>
+							<XO>0</XO>
+							<YS>0.800000012</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<string name="Text">30</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">true</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="TextLabel" referent="RBX01EEF07417394F85B201149EA8B7A63C">
+					<Properties>
+						<bool name="Active">false</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">6</token>
+						<string name="Name">TextLabel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>0.200000003</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<string name="Text">Number Of Frames?</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">true</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="ImageButton" referent="RBXF00286D065D8465CB12C596CE68A45AE">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<Content name="Image"><url>http://www.roblox.com/asset/?id=54952349</url></Content>
+						<Color3 name="ImageColor3">4294967295</Color3>
+						<Vector2 name="ImageRectOffset">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<Vector2 name="ImageRectSize">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<float name="ImageTransparency">0</float>
+						<bool name="Modal">false</bool>
+						<string name="Name">Confirm</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0.699999988</XS>
+							<XO>0</XO>
+							<YS>0.200000003</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<token name="ScaleType">0</token>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.300000012</XS>
+							<XO>0</XO>
+							<YS>0.800000012</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<Rect2D name="SliceCenter">
+							<min>
+								<X>0</X>
+								<Y>0</Y>
+							</min>
+							<max>
+								<X>0</X>
+								<Y>0</Y>
+							</max>
+						</Rect2D>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="ImageButton" referent="RBX61024FED7C8C4F00B1430EC749A1A9BF">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<Content name="Image"><url>http://www.roblox.com/asset/?id=89114172</url></Content>
+						<Color3 name="ImageColor3">4294967295</Color3>
+						<Vector2 name="ImageRectOffset">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<Vector2 name="ImageRectSize">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<float name="ImageTransparency">0</float>
+						<bool name="Modal">false</bool>
+						<string name="Name">Cancel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0.200000003</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<token name="ScaleType">0</token>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.300000012</XS>
+							<XO>0</XO>
+							<YS>0.800000012</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<Rect2D name="SliceCenter">
+							<min>
+								<X>0</X>
+								<Y>0</Y>
+							</min>
+							<max>
+								<X>0</X>
+								<Y>0</Y>
+							</max>
+						</Rect2D>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+			</Item>
+			<Item class="Frame" referent="RBX491B5E41D41848A7A2BCC4E01326697C">
+				<Properties>
+					<bool name="Active">false</bool>
+					<Color3 name="BackgroundColor3">4278190080</Color3>
+					<float name="BackgroundTransparency">1</float>
+					<Color3 name="BorderColor3">4294967295</Color3>
+					<int name="BorderSizePixel">1</int>
+					<bool name="ClipsDescendants">false</bool>
+					<bool name="Draggable">false</bool>
+					<string name="Name">About</string>
+					<Ref name="NextSelectionDown">null</Ref>
+					<Ref name="NextSelectionLeft">null</Ref>
+					<Ref name="NextSelectionRight">null</Ref>
+					<Ref name="NextSelectionUp">null</Ref>
+					<UDim2 name="Position">
+						<XS>0.100000001</XS>
+						<XO>0</XO>
+						<YS>0.100000001</YS>
+						<YO>0</YO>
+					</UDim2>
+					<float name="Rotation">0</float>
+					<bool name="Selectable">false</bool>
+					<Ref name="SelectionImageObject">null</Ref>
+					<UDim2 name="Size">
+						<XS>0.800000012</XS>
+						<XO>0</XO>
+						<YS>0.800000012</YS>
+						<YO>0</YO>
+					</UDim2>
+					<token name="SizeConstraint">0</token>
+					<token name="Style">0</token>
+					<bool name="Visible">false</bool>
+					<int name="ZIndex">1</int>
+				</Properties>
+				<Item class="Frame" referent="RBX49C5369B725F455C9CC47275724E1C67">
+					<Properties>
+						<bool name="Active">false</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<string name="Name">About</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0.100000001</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.5</XS>
+							<XO>0</XO>
+							<YS>0.899999976</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+					<Item class="TextLabel" referent="RBX83B4CEC12C524C88A8213ECEB2823DE4">
+						<Properties>
+							<bool name="Active">false</bool>
+							<Color3 name="BackgroundColor3">4294967295</Color3>
+							<float name="BackgroundTransparency">1</float>
+							<Color3 name="BorderColor3">4279970357</Color3>
+							<int name="BorderSizePixel">1</int>
+							<bool name="ClipsDescendants">false</bool>
+							<bool name="Draggable">false</bool>
+							<token name="Font">3</token>
+							<token name="FontSize">8</token>
+							<string name="Name">Header</string>
+							<Ref name="NextSelectionDown">null</Ref>
+							<Ref name="NextSelectionLeft">null</Ref>
+							<Ref name="NextSelectionRight">null</Ref>
+							<Ref name="NextSelectionUp">null</Ref>
+							<UDim2 name="Position">
+								<XS>0.100000001</XS>
+								<XO>0</XO>
+								<YS>0</YS>
+								<YO>0</YO>
+							</UDim2>
+							<float name="Rotation">0</float>
+							<bool name="Selectable">false</bool>
+							<Ref name="SelectionImageObject">null</Ref>
+							<UDim2 name="Size">
+								<XS>0.800000012</XS>
+								<XO>0</XO>
+								<YS>0.100000001</YS>
+								<YO>0</YO>
+							</UDim2>
+							<token name="SizeConstraint">0</token>
+							<string name="Text">About Free-D</string>
+							<Color3 name="TextColor3">4294967295</Color3>
+							<bool name="TextScaled">false</bool>
+							<Color3 name="TextStrokeColor3">4278190080</Color3>
+							<float name="TextStrokeTransparency">1</float>
+							<float name="TextTransparency">0</float>
+							<bool name="TextWrapped">false</bool>
+							<token name="TextXAlignment">2</token>
+							<token name="TextYAlignment">1</token>
+							<bool name="Visible">true</bool>
+							<int name="ZIndex">1</int>
+						</Properties>
+					</Item>
+					<Item class="TextLabel" referent="RBX093E1A5BA6B540E59D0CD978C1797413">
+						<Properties>
+							<bool name="Active">false</bool>
+							<Color3 name="BackgroundColor3">4294967295</Color3>
+							<float name="BackgroundTransparency">1</float>
+							<Color3 name="BorderColor3">4279970357</Color3>
+							<int name="BorderSizePixel">1</int>
+							<bool name="ClipsDescendants">false</bool>
+							<bool name="Draggable">false</bool>
+							<token name="Font">3</token>
+							<token name="FontSize">5</token>
+							<string name="Name">Stuff</string>
+							<Ref name="NextSelectionDown">null</Ref>
+							<Ref name="NextSelectionLeft">null</Ref>
+							<Ref name="NextSelectionRight">null</Ref>
+							<Ref name="NextSelectionUp">null</Ref>
+							<UDim2 name="Position">
+								<XS>0</XS>
+								<XO>0</XO>
+								<YS>0.100000001</YS>
+								<YO>0</YO>
+							</UDim2>
+							<float name="Rotation">0</float>
+							<bool name="Selectable">false</bool>
+							<Ref name="SelectionImageObject">null</Ref>
+							<UDim2 name="Size">
+								<XS>1</XS>
+								<XO>0</XO>
+								<YS>0.899999976</YS>
+								<YO>0</YO>
+							</UDim2>
+							<token name="SizeConstraint">0</token>
+							<string name="Text"><![CDATA[Free-D is a free and open-source modification to the roblox CSG system, written by OTRainbowDash5000 aka YAYZMAN23.
+
+The assembly end comes with an easy to use API, more info on which can be found by googling for Free-Ds github page. The latest source code to this can also be found there.
+
+This mod is released with the hopes of sparking a new generation of games with the maximum graphical potential provided by CSG. Feel free to modify it and redistribute it. 
+
+It is asked that you please respect all roblox rules while using this mod. While I do not wish for you to use this to do something that is not in the spirit of roblox, I can not stop you either, and will not be responsible for anything that happens as a consequence of using this mod.]]></string>
+							<Color3 name="TextColor3">4294967295</Color3>
+							<bool name="TextScaled">false</bool>
+							<Color3 name="TextStrokeColor3">4278190080</Color3>
+							<float name="TextStrokeTransparency">1</float>
+							<float name="TextTransparency">0</float>
+							<bool name="TextWrapped">true</bool>
+							<token name="TextXAlignment">2</token>
+							<token name="TextYAlignment">1</token>
+							<bool name="Visible">true</bool>
+							<int name="ZIndex">1</int>
+						</Properties>
+					</Item>
+				</Item>
+				<Item class="Frame" referent="RBX6F58B688C5C548BAA11322A5315B656C">
+					<Properties>
+						<bool name="Active">false</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<string name="Name">Credit</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0.5</XS>
+							<XO>0</XO>
+							<YS>0.100000001</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.5</XS>
+							<XO>0</XO>
+							<YS>0.899999976</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+					<Item class="TextLabel" referent="RBX2898D05CEA0D47CFB4DFE4B8C3928949">
+						<Properties>
+							<bool name="Active">false</bool>
+							<Color3 name="BackgroundColor3">4294967295</Color3>
+							<float name="BackgroundTransparency">1</float>
+							<Color3 name="BorderColor3">4279970357</Color3>
+							<int name="BorderSizePixel">1</int>
+							<bool name="ClipsDescendants">false</bool>
+							<bool name="Draggable">false</bool>
+							<token name="Font">3</token>
+							<token name="FontSize">8</token>
+							<string name="Name">Header</string>
+							<Ref name="NextSelectionDown">null</Ref>
+							<Ref name="NextSelectionLeft">null</Ref>
+							<Ref name="NextSelectionRight">null</Ref>
+							<Ref name="NextSelectionUp">null</Ref>
+							<UDim2 name="Position">
+								<XS>0.100000001</XS>
+								<XO>0</XO>
+								<YS>0</YS>
+								<YO>0</YO>
+							</UDim2>
+							<float name="Rotation">0</float>
+							<bool name="Selectable">false</bool>
+							<Ref name="SelectionImageObject">null</Ref>
+							<UDim2 name="Size">
+								<XS>0.800000012</XS>
+								<XO>0</XO>
+								<YS>0.100000001</YS>
+								<YO>0</YO>
+							</UDim2>
+							<token name="SizeConstraint">0</token>
+							<string name="Text">Credits:</string>
+							<Color3 name="TextColor3">4294967295</Color3>
+							<bool name="TextScaled">false</bool>
+							<Color3 name="TextStrokeColor3">4278190080</Color3>
+							<float name="TextStrokeTransparency">1</float>
+							<float name="TextTransparency">0</float>
+							<bool name="TextWrapped">false</bool>
+							<token name="TextXAlignment">2</token>
+							<token name="TextYAlignment">1</token>
+							<bool name="Visible">true</bool>
+							<int name="ZIndex">1</int>
+						</Properties>
+					</Item>
+					<Item class="TextLabel" referent="RBX775B53A0315F42B09F1AECAB7C94CABB">
+						<Properties>
+							<bool name="Active">false</bool>
+							<Color3 name="BackgroundColor3">4294967295</Color3>
+							<float name="BackgroundTransparency">1</float>
+							<Color3 name="BorderColor3">4279970357</Color3>
+							<int name="BorderSizePixel">1</int>
+							<bool name="ClipsDescendants">false</bool>
+							<bool name="Draggable">false</bool>
+							<token name="Font">3</token>
+							<token name="FontSize">6</token>
+							<string name="Name">Stuff</string>
+							<Ref name="NextSelectionDown">null</Ref>
+							<Ref name="NextSelectionLeft">null</Ref>
+							<Ref name="NextSelectionRight">null</Ref>
+							<Ref name="NextSelectionUp">null</Ref>
+							<UDim2 name="Position">
+								<XS>0</XS>
+								<XO>0</XO>
+								<YS>0.100000001</YS>
+								<YO>0</YO>
+							</UDim2>
+							<float name="Rotation">0</float>
+							<bool name="Selectable">false</bool>
+							<Ref name="SelectionImageObject">null</Ref>
+							<UDim2 name="Size">
+								<XS>1</XS>
+								<XO>0</XO>
+								<YS>0.899999976</YS>
+								<YO>0</YO>
+							</UDim2>
+							<token name="SizeConstraint">0</token>
+							<string name="Text"><![CDATA[This mod/plugin was written by OTRainbowDash5000 aka YAYZMAN23
+
+Credit to magnalite for writing the OBJ parser. I ripped it to save myself from having to write one.
+
+Special thanks to clonetrooper1019 for discovering that linehandleadornments could be used to generate 60FPS wireframe meshes. The animation editor makes very heavy use of this method.]]></string>
+							<Color3 name="TextColor3">4294967295</Color3>
+							<bool name="TextScaled">false</bool>
+							<Color3 name="TextStrokeColor3">4278190080</Color3>
+							<float name="TextStrokeTransparency">1</float>
+							<float name="TextTransparency">0</float>
+							<bool name="TextWrapped">true</bool>
+							<token name="TextXAlignment">2</token>
+							<token name="TextYAlignment">1</token>
+							<bool name="Visible">true</bool>
+							<int name="ZIndex">1</int>
+						</Properties>
+					</Item>
+				</Item>
+				<Item class="ImageButton" referent="RBX53B07490FDF742B69192C8030E368705">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<Content name="Image"><url>http://www.roblox.com/asset/?id=89114172</url></Content>
+						<Color3 name="ImageColor3">4294967295</Color3>
+						<Vector2 name="ImageRectOffset">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<Vector2 name="ImageRectSize">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<float name="ImageTransparency">0</float>
+						<bool name="Modal">false</bool>
+						<string name="Name">Cancel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0.899999976</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<token name="ScaleType">0</token>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>0.100000001</XS>
+							<XO>0</XO>
+							<YS>0.100000001</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<Rect2D name="SliceCenter">
+							<min>
+								<X>0</X>
+								<Y>0</Y>
+							</min>
+							<max>
+								<X>0</X>
+								<Y>0</Y>
+							</max>
+						</Rect2D>
+						<token name="Style">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+			</Item>
+			<Item class="Frame" referent="RBXD75CE87068FA49288AED322F633F8907">
+				<Properties>
+					<bool name="Active">false</bool>
+					<Color3 name="BackgroundColor3">4294967295</Color3>
+					<float name="BackgroundTransparency">1</float>
+					<Color3 name="BorderColor3">4279970357</Color3>
+					<int name="BorderSizePixel">1</int>
+					<bool name="ClipsDescendants">false</bool>
+					<bool name="Draggable">false</bool>
+					<string name="Name">Main</string>
+					<Ref name="NextSelectionDown">null</Ref>
+					<Ref name="NextSelectionLeft">null</Ref>
+					<Ref name="NextSelectionRight">null</Ref>
+					<Ref name="NextSelectionUp">null</Ref>
+					<UDim2 name="Position">
+						<XS>0.0500000007</XS>
+						<XO>0</XO>
+						<YS>0.0500000007</YS>
+						<YO>0</YO>
+					</UDim2>
+					<float name="Rotation">0</float>
+					<bool name="Selectable">false</bool>
+					<Ref name="SelectionImageObject">null</Ref>
+					<UDim2 name="Size">
+						<XS>0</XS>
+						<XO>250</XO>
+						<YS>0</YS>
+						<YO>200</YO>
+					</UDim2>
+					<token name="SizeConstraint">0</token>
+					<token name="Style">0</token>
+					<bool name="Visible">true</bool>
+					<int name="ZIndex">1</int>
+				</Properties>
+				<Item class="TextLabel" referent="RBX3BA6906D0AF14FF1B64A3044CAA5D804">
+					<Properties>
+						<bool name="Active">false</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">6</token>
+						<string name="Name">TextLabel</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>0.25</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<string name="Text"><![CDATA[Free-D Mesh Injector
+By OTRainbowDash5000/YAYZMAN23]]></string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">false</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="TextButton" referent="RBXE8C6FC52E2B549DD9637DE2E5C559EF7">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">7</token>
+						<bool name="Modal">false</bool>
+						<string name="Name">Inject</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0.25</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>0.25</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<token name="Style">0</token>
+						<string name="Text">Inject a New Mesh</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">false</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="TextButton" referent="RBX193C0E5ABA654C3184CB3DD7024EE636">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">7</token>
+						<bool name="Modal">false</bool>
+						<string name="Name">Animate</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0.5</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>0.25</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<token name="Style">0</token>
+						<string name="Text">Inject an Animated Mesh</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">false</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+				<Item class="TextButton" referent="RBX19DB1059C4DB43E69F41DE765B160A3E">
+					<Properties>
+						<bool name="Active">true</bool>
+						<bool name="AutoButtonColor">true</bool>
+						<Color3 name="BackgroundColor3">4278190080</Color3>
+						<float name="BackgroundTransparency">0.400000006</float>
+						<Color3 name="BorderColor3">4294967295</Color3>
+						<int name="BorderSizePixel">1</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<token name="Font">3</token>
+						<token name="FontSize">7</token>
+						<bool name="Modal">false</bool>
+						<string name="Name">About</string>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0.75</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">true</bool>
+						<bool name="Selected">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>0.25</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<token name="Style">0</token>
+						<string name="Text">About</string>
+						<Color3 name="TextColor3">4294967295</Color3>
+						<bool name="TextScaled">false</bool>
+						<Color3 name="TextStrokeColor3">4278190080</Color3>
+						<float name="TextStrokeTransparency">1</float>
+						<float name="TextTransparency">0</float>
+						<bool name="TextWrapped">false</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+					</Properties>
+				</Item>
+			</Item>
+		</Item>
+		<Item class="Script" referent="RBX09D223F5CF8649E8ADDA4F0063586A7D">
+			<Properties>
+				<bool name="Disabled">true</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<string name="Name">AutoAssembler</string>
+				<ProtectedString name="Source"><![CDATA[alloc(mainmem,2048)
+alloc(stackdata, 64)
+alloc(testcommand, 512)
+alloc(facecommand, 512)
+alloc(facecommandstorage, 64)
+alloc(vertexcommand, 512)
+alloc(setready, 512)
+alloc(vertexcommandstorage, 64)
+alloc(convertascii, 512)
+alloc(convertasciistorage, 64)
+alloc(convertbyte, 512)
+alloc(numberoffaces, 4)
+alloc(numberofvertexes, 4)
+alloc(facestorage, 102400)
+alloc(vertexstorage, 102400)
+alloc(dounion, 512)
+alloc(shouldinject, 4)
+label(addvertexfalse)
+label(convert0)
+label(convert1)
+label(convert2)
+label(convert3)
+label(convert4)
+label(convert5)
+label(convert6)
+label(convert7)
+label(convert8)
+label(convert9)
+label(converta)
+label(convertb)
+label(convertc)
+label(convertd)
+label(converte)
+label(convertf)
+label(addfacefalse)
+label(testcommandfalse)
+label(setreadyfalse)
+label(returnhere)
+label(cleanup)
+label(returnunion)
+label(dounionop)
+
+shouldinject:
+db 00 00 00 00
+
+numberoffaces:
+db 00 00 00 00
+
+numberofvertexes:
+db 00 00 00 00
+
+facestorage:
+db 00 00 00 00
+
+vertexstorage:
+db 00 00 00 00
+
+convertbyte: //Holy crap this function is awful. Dont blame me, was written at 3am.
+	cmp eax, 30
+	je convert0
+	cmp eax, 31
+	je convert1
+	cmp eax, 32
+	je convert2
+	cmp eax, 33
+	je convert3
+	cmp eax, 34
+	je convert4
+	cmp eax, 35
+	je convert5
+	cmp eax, 36
+	je convert6
+	cmp eax, 37
+	je convert7
+	cmp eax, 38
+	je convert8
+	cmp eax, 39
+	je convert9
+	cmp eax, 41
+	je converta
+	cmp eax, 42
+	je convertb
+	cmp eax, 43
+	je convertc
+	cmp eax, 44
+	je convertd
+	cmp eax, 45
+	je converte
+	cmp eax, 46
+	je convertf
+
+	convert0:
+		mov eax, 0
+		ret
+	convert1:
+		mov eax, 1
+		ret
+	convert2:
+		mov eax, 2
+		ret
+	convert3:
+		mov eax, 3
+		ret
+	convert4:
+		mov eax, 4
+		ret	
+	convert5:
+		mov eax, 5
+		ret		
+	convert6:
+		mov eax, 6
+		ret	
+	convert7:
+		mov eax, 7
+		ret
+	convert8:
+		mov eax, 8
+		ret
+	convert9:
+		mov eax, 9
+		ret
+	converta:
+		mov eax, a
+		ret
+	convertb:
+		mov eax, b
+		ret
+	convertc:
+		mov eax, c
+		ret
+	convertd:
+		mov eax, d
+		ret	
+	converte:
+		mov eax, e
+		ret	
+	convertf:
+		mov eax, f
+		ret	
+
+convertasciistorage:
+
+convertascii:
+	mov [convertasciistorage], eax
+	mov [convertasciistorage+4], ebx
+	mov [convertasciistorage+8], ecx
+	mov ecx, 00000000
+	mov ebx, eax
+	mov eax, [ebx-3]
+	shr eax, 18
+	call convertbyte
+	shl eax, 1c
+	mov ecx, eax
+	
+	mov eax, [ebx-2]
+	shr eax, 18
+	call convertbyte
+	shl eax, 18
+	add ecx, eax
+	
+	mov eax, [ebx-1]
+	shr eax, 18
+	call convertbyte
+	shl eax, 14
+	add ecx, eax
+	
+	mov eax, [ebx]
+	shr eax, 18
+	call convertbyte
+	shl eax, 10
+	add ecx, eax
+	
+	mov eax, [ebx+1]
+	shr eax, 18
+	call convertbyte
+	shl eax, c
+	add ecx, eax
+	
+	mov eax, [ebx+2]
+	shr eax, 18
+	call convertbyte
+	shl eax, 8
+	add ecx, eax
+	
+	mov eax, [ebx+3]
+	shr eax, 18
+	call convertbyte
+	shl eax, 4
+	add ecx, eax
+	
+	mov eax, [ebx+4]
+	shr eax, 18
+	call convertbyte
+	add ecx, eax
+	
+	mov eax, ecx
+	
+	mov ebx, [convertasciistorage+4]
+	mov ecx, [convertasciistorage+8]
+	ret
+	
+vertexcommandstorage:
+
+vertexcommand:
+	mov [vertexcommandstorage], ebx
+	mov [vertexcommandstorage+4], ecx
+	
+	cmp [eax], 45455246 //FREE
+	jne addvertexfalse
+	cmp [eax+4], 4120442d //-D A
+	jne addvertexfalse
+	cmp [eax+8], 56204444 //DD V
+	jne addvertexfalse
+	cmp [eax+c], 20545245 //ERT 
+	jne addvertexfalse
+	
+	add eax, 10
+	
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [vertexcommandstorage+8]
+	add eax, 8
+	mov [vertexcommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [vertexstorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [vertexstorage+ebx], eax
+	shr ebx, 2
+	mov [vertexstorage], ebx
+	
+	mov eax, [numberofvertexes]
+	add eax, 1
+	mov [numberofvertexes], eax
+	
+	mov eax, 1
+	ret
+	
+	
+	mov eax, 1	
+	ret
+	
+	addvertexfalse:
+		mov eax,0
+		ret
+	
+facecommandstorage:
+
+facecommand:
+	mov [facecommandstorage], ebx
+	mov [facecommandstorage+4], ecx
+	cmp [eax], 45455246 //FREE
+	jne addfacefalse
+	cmp [eax+4], 4120442d //-D A
+	jne addfacefalse
+	cmp [eax+8], 46204444 //DD F
+	jne addfacefalse
+	cmp [eax+c], 20454341 //ACE 
+	jne addfacefalse
+	
+	add eax, 10
+	
+	mov [facecommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [facestorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [facestorage+ebx], eax
+	shr ebx, 2
+	mov [facestorage], ebx
+	
+	mov eax, [facecommandstorage+8]
+	add eax, 8
+	mov [facecommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [facestorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [facestorage+ebx], eax
+	shr ebx, 2
+	mov [facestorage], ebx
+	
+	mov eax, [facecommandstorage+8]
+	add eax, 8
+	mov [facecommandstorage+8], eax
+	
+	call convertascii
+	
+	mov ebx, [facestorage]
+	shl ebx, 2
+	add ebx, 4
+	mov [facestorage+ebx], eax
+	shr ebx, 2
+	mov [facestorage], ebx
+	
+	mov ebx, [convertasciistorage+4]
+	mov ecx, [convertasciistorage+8]
+	
+	mov eax, [numberoffaces]
+	add eax, 1
+	mov [numberoffaces], eax
+	
+	mov eax, 1
+	ret
+
+	addfacefalse:
+		mov eax,0
+		ret
+
+testcommand:
+	cmp [eax], 45455246 //FREE
+	jne testcommandfalse
+	cmp [eax+4], 5420442d //-D T
+	jne testcommandfalse
+	cmp [eax+8], 20545345 //EST 
+	jne testcommandfalse 
+	cmp [eax+c], 4d4d4f43 //COMM
+	jne testcommandfalse
+	cmp [eax+10], 414e4420 //AND 
+	
+	mov [eax], 57205449 //IT W
+	mov [eax+4], 454b524f //ORKE
+	mov [eax+8], 41592044 //D YA
+	mov [eax+c], 41414141 //AAAA
+	mov [eax+10], 59414141 //AAAY
+	
+	mov eax,1
+	ret
+	
+	testcommandfalse:
+		mov eax, 0
+		ret
+		
+setready:
+	cmp [eax], 45455246 //FREE
+	jne setreadyfalse
+	cmp [eax+4], 5320442D //-D S
+	jne setreadyfalse
+	cmp [eax+8], 53205445 //ET S
+	jne setreadyfalse
+	cmp [eax+C], 54524154 //TART
+	jne setreadyfalse
+	
+	mov [shouldinject], 1
+	mov eax, 1
+	ret
+	setreadyfalse:
+		mov eax, 0
+		ret
+	
+
+mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMANDS FROM HERE
+	pushfd
+	pushad
+	
+	
+	mov eax, esi
+	call testcommand
+	cmp eax, 1
+	je cleanup
+	
+	mov eax,esi
+	call facecommand
+	cmp eax, 1
+	je cleanup
+	
+	mov eax,esi
+	call vertexcommand
+	cmp eax,1
+	je cleanup
+	
+	mov eax, esi
+	call setready
+	cmp eax,1
+	je cleanup
+
+	
+	jmp cleanup
+
+	cleanup:
+		popad
+		popfd
+		cmp eax,[esi]
+		jne RobloxStudioBeta.exe+A8C6
+		add edx,04
+		jmp returnhere
+		
+dounion:
+	cmp [shouldinject], 00000000
+	je dounionop
+	mov [stackdata], eax
+	mov [esp], vertexstorage+4
+	mov eax, [numberofvertexes]
+	mov [esp+4], eax
+	mov [esp+8], facestorage+4
+	mov eax, [numberoffaces]
+	mov [esp+c], eax
+	mov eax, [stackdata]
+	
+	mov [vertexstorage], 00000000
+	mov [facestorage], 00000000
+	mov [numberoffaces], 00000000
+	mov [numberofvertexes], 00000000
+	mov [shouldinject], 00000000
+	jmp dounionop
+
+	dounionop:
+		call dword ptr [RobloxStudioBeta.exe+BEDD20]
+		jmp returnunion
+
+"RobloxStudioBeta.exe"+1F8333:
+	jmp dounion
+	nop
+	returnunion:
+
+"RobloxStudioBeta.exe"+A8B2:
+	jmp mainmem
+	nop
+	nop
+	returnhere:
+
+//injector 8B 55 08 56 8B 75 0C 83 E9 04 72 17 8D 9B 00 00 00 00 8B 02 
+
+//union 6A 00 51 D1 FA 8B CA C1  E9 1F 03 CA C7 04 24 DB ]]></ProtectedString>
+			</Properties>
+		</Item>
+		<Item class="Frame" referent="RBXA51C4C34B86747A6948E263556FB2F27">
+			<Properties>
+				<bool name="Active">false</bool>
+				<Color3 name="BackgroundColor3">4278255360</Color3>
+				<float name="BackgroundTransparency">0</float>
+				<Color3 name="BorderColor3">4279970357</Color3>
+				<int name="BorderSizePixel">1</int>
+				<bool name="ClipsDescendants">false</bool>
+				<bool name="Draggable">false</bool>
+				<string name="Name">NotAnimationFrame</string>
+				<Ref name="NextSelectionDown">null</Ref>
+				<Ref name="NextSelectionLeft">null</Ref>
+				<Ref name="NextSelectionRight">null</Ref>
+				<Ref name="NextSelectionUp">null</Ref>
+				<UDim2 name="Position">
+					<XS>0</XS>
+					<XO>0</XO>
+					<YS>0</YS>
+					<YO>0</YO>
+				</UDim2>
+				<float name="Rotation">0</float>
+				<bool name="Selectable">false</bool>
+				<Ref name="SelectionImageObject">null</Ref>
+				<UDim2 name="Size">
+					<XS>0.0333333351</XS>
+					<XO>0</XO>
+					<YS>1</YS>
+					<YO>0</YO>
+				</UDim2>
+				<token name="SizeConstraint">0</token>
+				<token name="Style">0</token>
+				<bool name="Visible">true</bool>
+				<int name="ZIndex">1</int>
+			</Properties>
+		</Item>
+		<Item class="TextButton" referent="RBX3EA5DD615E72452C9A9A9168A82C4A84">
+			<Properties>
+				<bool name="Active">false</bool>
+				<bool name="AutoButtonColor">false</bool>
+				<Color3 name="BackgroundColor3">4278255360</Color3>
+				<float name="BackgroundTransparency">0</float>
+				<Color3 name="BorderColor3">4279970357</Color3>
+				<int name="BorderSizePixel">1</int>
+				<bool name="ClipsDescendants">false</bool>
+				<bool name="Draggable">false</bool>
+				<token name="Font">3</token>
+				<token name="FontSize">5</token>
+				<bool name="Modal">false</bool>
+				<string name="Name">AnimationFrame</string>
+				<Ref name="NextSelectionDown">null</Ref>
+				<Ref name="NextSelectionLeft">null</Ref>
+				<Ref name="NextSelectionRight">null</Ref>
+				<Ref name="NextSelectionUp">null</Ref>
+				<UDim2 name="Position">
+					<XS>0</XS>
+					<XO>0</XO>
+					<YS>0</YS>
+					<YO>0</YO>
+				</UDim2>
+				<float name="Rotation">0</float>
+				<bool name="Selectable">true</bool>
+				<bool name="Selected">false</bool>
+				<Ref name="SelectionImageObject">null</Ref>
+				<UDim2 name="Size">
+					<XS>0.0329999998</XS>
+					<XO>0</XO>
+					<YS>1</YS>
+					<YO>0</YO>
+				</UDim2>
+				<token name="SizeConstraint">0</token>
+				<token name="Style">0</token>
+				<string name="Text"></string>
+				<Color3 name="TextColor3">4279970357</Color3>
+				<bool name="TextScaled">false</bool>
+				<Color3 name="TextStrokeColor3">4278190080</Color3>
+				<float name="TextStrokeTransparency">1</float>
+				<float name="TextTransparency">0</float>
+				<bool name="TextWrapped">false</bool>
+				<token name="TextXAlignment">2</token>
+				<token name="TextYAlignment">1</token>
+				<bool name="Visible">true</bool>
+				<int name="ZIndex">1</int>
+			</Properties>
+		</Item>
+	</Item>
+</roblox>
