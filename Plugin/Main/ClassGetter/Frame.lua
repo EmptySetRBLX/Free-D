@@ -171,7 +171,11 @@ Class.DoUnion = function(self, plugin)
 	end
 	local union = plugin:Union({part})
 	if union == nil then
-		print("INJECTION FAILED :(, TRY REDUCING YOUR TRIANGLE COUNT")
+		local m = Instance.new("Message")
+		m.Parent = game.Workspace
+		m.Text = "Union injection failed, sorry :(. Try reducing the triangle count of your obj."
+		wait(2.5)
+		m:Destroy()
 		union = Instance.new("Part")
 	end
 	union.CFrame = CFrame.new(((maxx+minx)/2),((maxy+miny)/2),((maxz+minz)/2))

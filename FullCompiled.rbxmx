@@ -382,6 +382,14 @@ Class.DoUnion = function(self, plugin)
 		
 	end
 	local union = plugin:Union({part})
+	if union == nil then
+		local m = Instance.new("Message")
+		m.Parent = game.Workspace
+		m.Text = "Union injection failed, sorry :(. Try reducing the triangle count of your obj."
+		wait(2.5)
+		m:Destroy()
+		union = Instance.new("Part")
+	end
 	union.CFrame = CFrame.new(((maxx+minx)/2),((maxy+miny)/2),((maxz+minz)/2))
 	return union
 end
@@ -3529,6 +3537,9 @@ vertexcommand:
 	cmp [eax+c], 20545245 //ERT 
 	jne addvertexfalse
 	
+	cmp [numberofvertexes], FA0
+	je addvertexfalse
+	
 	add eax, 10
 	
 	mov [vertexcommandstorage+8], eax
@@ -3635,6 +3646,9 @@ facecommand:
 	jne addfacefalse
 	cmp [eax+c], 20454341 //ACE 
 	jne addfacefalse
+	
+	cmp [numberoffaces], 9C4
+	je addfacefalse
 	
 	add eax, 10
 	

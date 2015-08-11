@@ -214,6 +214,9 @@ vertexcommand:
 	cmp [eax+c], 20545245 //ERT 
 	jne addvertexfalse
 	
+	cmp [numberofvertexes], FA0
+	je addvertexfalse
+	
 	add eax, 10
 	
 	mov [vertexcommandstorage+8], eax
@@ -320,6 +323,9 @@ facecommand:
 	jne addfacefalse
 	cmp [eax+c], 20454341 //ACE 
 	jne addfacefalse
+	
+	cmp [numberoffaces], 9C4
+	je addfacefalse
 	
 	add eax, 10
 	
