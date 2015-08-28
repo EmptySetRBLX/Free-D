@@ -3777,7 +3777,7 @@ mainmem: //EXECUTED WHEN MEMORY IS ALLOCATED TO A STRING OBJECT, CAN RUN COMMAND
 		popad
 		popfd
 		cmp eax,[esi]
-		jne RobloxStudioBeta.exe+A7B6
+		jne RobloxStudioBeta.exe+A966
 		add edx,04
 		jmp returnhere
 		
@@ -3804,12 +3804,12 @@ dounion:
 		call dword ptr [RobloxStudioBeta.exe+BFFD24]
 		jmp returnunion
 
-"RobloxStudioBeta.exe"+1F8733:
+"RobloxStudioBeta.exe"+1F92D3:
 	jmp dounion
 	nop
 	returnunion:
 
-"RobloxStudioBeta.exe"+A7A2:
+"RobloxStudioBeta.exe"+A952:
 	jmp mainmem
 	nop
 	nop
