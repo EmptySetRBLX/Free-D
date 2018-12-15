@@ -1,16 +1,12 @@
 # Free-D Mesh Injector
 
-## Written by OTRainbowDash5000
+## Written by OTRD5K
 
-Free-D is a free and open-source modification to the roblox CSG system, written by OTRainbowDash5000 aka YAYZMAN23.
+Free-D is a free and open-source modification to the roblox CSG system.
 
 Feel free to contribute in any productive way to this project through github
 
 This mod is released with the hopes of sparking a new generation of games with the maximum graphical potential provided by CSG. Feel free to modify it and redistribute it. 
-
-It is asked that you please respect all roblox rules while using this mod. While I do not wish for you to use this to do something that is not in the spirit of roblox, I can not stop you either. I will not be responsible for anything that happens as a consequence of using this mod to inject anything phallic in nature, if you catch my drift.
-
-In other words, dont be a complete dumbass with this please.
 
 ##API
 
