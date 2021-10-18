@@ -1,6 +1,6 @@
 # Free-D Mesh Injector
 
-## Written by OTRD5K
+## Written by EmptySet
 
 Free-D is a free and open-source modification to the roblox CSG system.
 
